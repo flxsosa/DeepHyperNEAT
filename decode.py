@@ -4,7 +4,6 @@ Contains functions for decoding a given CPPN into a Substrate.
 Felix Sosa
 '''
 
-import neat 
 import numpy as np
 import itertools as it
 import activations
@@ -12,17 +11,7 @@ from phenomes import FeedForwardSubstrate
 
 
 def decode(cppn, sub_input_dimensions, sub_outputs, sheet_dimensions=None):
-    '''
-    Decodes cppn into Substrate. Calls on create_phenotype_network.
-
-    cppn -- input CPPN to be decoded
-    sub_input_dimensions -- matrix dimensions of input layer for Substrate (row,col)
-    sub_outputs -- number of outputs in Substrate
-    sheet_dimensions -- matrix dimenstions of Substrate sheets. Defaults to input.
-    '''
-
     # Get x and y coordinates for Substrate input layer and create layer
-    # neat-python uses floats for coordinates so we need to convert int->float
     if sub_input_dimensions[1] == 1:
         x = [0.0]
     elif sub_input_dimensions[1] > 1:
@@ -34,7 +23,6 @@ def decode(cppn, sub_input_dimensions, sub_outputs, sheet_dimensions=None):
         y = np.linspace(-1.0, 1.0, sub_input_dimensions[0])
     sub_input_layer = list(it.product(x,y))
 
-    # We want the output nodes to have their first coord at (1.0,1.0)
     if sub_outputs == 1:
         x = [0.0]
     elif sub_outputs > 1:
@@ -45,7 +33,7 @@ def decode(cppn, sub_input_dimensions, sub_outputs, sheet_dimensions=None):
     # Check if sheet dimensions have been provided
     if sheet_dimensions:
         if sheet_dimensions[1] == 1:
-            x = [0.0]
+            x = [1.0]
         elif sheet_dimensions[1] > 1:
             x = np.linspace(-1.0, 1.0, sheet_dimensions[1])
 
@@ -63,7 +51,7 @@ def decode(cppn, sub_input_dimensions, sub_outputs, sheet_dimensions=None):
         (0,0): sub_out_layer,
         (1,0): sub_input_layer
     }
-
+    # print(substrate)
     # Create a list of connection mappings
     connection_mappings = []
 
@@ -78,7 +66,7 @@ def decode(cppn, sub_input_dimensions, sub_outputs, sheet_dimensions=None):
     
     return create_phenotype_network(cppn,substrate, connection_mappings)
 
-def create_phenotype_network(cppn, substrate, connection_maps, activation_function="tanh"):
+def create_phenotype_network(cppn, substrate, connection_maps, activation_function="relu"):
     '''
     Creates a NN using a CPPN
     '''
@@ -86,7 +74,6 @@ def create_phenotype_network(cppn, substrate, connection_maps, activation_functi
     layers = {}
     # Inititialize node evaluations
     node_evals = []
-
     # Gather layers in substrate
     for i in range(len(substrate.keys())):
         layers[i] = []
@@ -95,30 +82,24 @@ def create_phenotype_network(cppn, substrate, connection_maps, activation_functi
                 layers[i].append(key)
         if layers[i] == []:
             del layers[i]
-
     # Assign coordinates
     input_coordinates = (substrate[(1,0)],(1,0))
     input_nodes = range(len(input_coordinates[0]))
     output_coordinates = (substrate[(0,0)],(0,0))
     output_nodes = range(len(input_nodes), len(input_nodes)+len(output_coordinates[0]))
-
     # Remove the input and output layers from the substrate dictionary
     del substrate[(1,0)]
     del substrate[(0,0)]
     # List of layers, first index = top layer.
     hidden_coordinates = [(substrate[k], k) for k in substrate.keys()] 
-
     counter = 0
     for layer in hidden_coordinates:
         counter += len(layer[0])
     hidden_nodes = range(len(input_nodes)+len(output_nodes), 
                          len(input_nodes)+len(output_nodes)+counter)
-    
     # Get activation function.
     activation_functions = activations.ActivationFunctionSet()
     activation = activation_functions.get(activation_function)
-    linear_activation = activation_functions.get('linear')
-    
     # Decode depending on whether there are hidden layers or not
     if len(hidden_nodes) != 0:
         # Output to Topmost Hidden Layer
@@ -137,11 +118,10 @@ def create_phenotype_network(cppn, substrate, connection_maps, activation_functi
                                    (substrate[source_sheet], source_sheet), hidden_nodes[idx], False)  
                 idx += len(substrate[source_sheet])
             if im:
-                node_evals.append((output_nodes[counter], linear_activation, sum, 0.0, 1.0, im))
+                node_evals.append((output_nodes[counter], activation, sum, 0.0, 1.0, im))
             hidden_idx = idx
             idx = 0
             counter += 1
-
         # Hidden to Hidden Layers - from top to bottom
         # For each layer in substrate, omitting input layer and going from top to bottom
         counter = 0
@@ -184,7 +164,6 @@ def create_phenotype_network(cppn, substrate, connection_maps, activation_functi
                 if im:
                     node_evals.append((hidden_nodes[counter], activation, sum, 0.0, 1.0, im))
                 counter += 1
-
     else:
         # Output Input Layer
         idx = 0
@@ -197,9 +176,8 @@ def create_phenotype_network(cppn, substrate, connection_maps, activation_functi
                 im = find_neurons(cppn, oc, output_coordinates[1], (input_coordinates[0], 
                                   input_coordinates[1]), input_nodes[idx], False)
                 if im:
-                    node_evals.append((output_nodes[counter], linear_activation, sum, 0.0, 1.0, im))
+                    node_evals.append((output_nodes[counter], activation, sum, 0.0, 1.0, im))
                 counter += 1
-    
     return FeedForwardSubstrate(input_nodes, output_nodes, node_evals)
 
 def find_neurons(cppn, source_coord, source_layer, target_layer, start_idx, outgoing, max_weight=5.0):
@@ -223,19 +201,18 @@ def query_cppn(coord1, coord2, outgoing, cppn, cppnon_tuple, max_weight=5.0):
     Helper funciton. Queries CPPN for weights in a Substrate.
     '''
     idx = None
+    # print([coord1[0], coord1[1], coord2[0], coord2[1]])
     for node_id in cppn.output_nodes:
         if(cppn.nodes[node_id].cppn_tuple == cppnon_tuple):
             idx = node_id
     if idx == None:
-        print("fuck")
-        raw_input()
         return 0.0
     if outgoing:
-        i = [coord1[0], coord1[1], coord2[0], coord2[1], 1.0]
+        i = [coord1[0], coord1[1], coord2[0], coord2[1]]
     else:
-        i = [coord2[0], coord2[1], coord1[0], coord1[1], 1.0]
+        i = [coord2[0], coord2[1], coord1[0], coord1[1]]
     w = cppn.activate(i)[idx]
     if abs(w) > 0.2:  # If abs(weight) is below threshold, treat weight as 0.0.
-        return w * max_weight
+        return w# * max_weight
     else:
         return 0.0

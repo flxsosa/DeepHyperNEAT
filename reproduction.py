@@ -7,7 +7,7 @@ Felix Sosa
 from genome import Genome
 from itertools import count
 
-def Reproduction():
+class Reproduction():
 
 	def __init__(self):
 		self.genome_indexer = count(1)

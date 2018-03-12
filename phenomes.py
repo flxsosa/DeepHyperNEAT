@@ -5,8 +5,7 @@ feed forward (vanilla) neural nets.
 Felix Sosa
 '''
 
-from neat.graphs import feed_forward_layers
-from neat.six_util import itervalues
+from six_util import itervalues
 
 def required_for_output(inputs, outputs, connections):
     """
@@ -94,8 +93,14 @@ class FeedForwardCPPN(object):
             node_inputs = []
             for i, w in links:
                 node_inputs.append(self.values[i] * w)
+            # print
+            # print("Node:", act_func)
+            # print("Node Inputs", node_inputs)
             s = sum(node_inputs)
             self.values[node] = act_func(bias + response * s)
+        # print("CPPN given Inputs {},{},{},{}".format(
+        #         self.values[-1],self.values[-2],
+        #         self.values[-3],self.values[-4]))
         return self.values
 
     @staticmethod
@@ -156,33 +161,78 @@ class FeedForwardSubstrate(object):
 
     @staticmethod
     def create(genome):
-        ''' 
-        Receives a genome and returns its phenotype (a FeedForwardNetwork). 
-        '''
+        # Receives genome, returns feed forward network
         # Gather expressed connections.
         connections = [cg.key for cg in itervalues(genome.connections) if cg.enabled]
 
         layers = feed_forward_layers(genome.input_keys, genome.output_keys, connections)
         node_evals = []
+        # Traverse layers
         for layer in layers:
+            # For each node in each layer, collect all incoming connections to the node
             for node in layer:
                 inputs = []
-                node_expr = [] # currently unused
                 for conn_key in connections:
-                    inode, onode = conn_key
-                    if onode == node:
+                    input_node, output_node = conn_key
+                    if output_node == node:
                         cg = genome.connections[conn_key]
-                        inputs.append((inode, cg.weight))
-                        node_expr.append("v[{}] * {:.7e}".format(inode, cg.weight))
+                        inputs.append((input_node, cg.weight))
+                # Gather node gene information
+                node_gene = genome.nodes[node]
+                activation_function = node_gene.activation
+                node_evals.append((node, activation_function, node_gene.bias, 
+                                   node_gene.response, inputs))
 
+        return FeedForwardCPPN(genome.input_keys, genome.output_keys, node_evals, 
+                                  genome.nodes)
 
-                ng = genome.nodes[node]
-                aggregation_function = config.genome_config.aggregation_function_defs.get(
-                                        ng.aggregation)
-                activation_function = config.genome_config.activation_defs.get(
-                                        ng.activation)
-                node_evals.append((node, activation_function, aggregation_function, 
-                                   ng.bias, ng.response, inputs))
+class FeedForwardNet(object):
+    '''
+    Class for a feed forward CPPN
+    '''
+    def __init__(self, inputs, outputs, node_evals, nodes=None):
+        self.input_nodes = inputs
+        self.output_nodes = outputs
+        self.node_evals = node_evals
+        self.values = dict((key, 0.0) for key in inputs + outputs)
+        self.nodes = nodes
 
-        return FeedForwardNetwork(config.genome_config.input_keys, 
-                                  config.genome_config.output_keys, node_evals)
+    def activate(self, inputs):
+        if len(self.input_nodes) != len(inputs):
+            raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(
+                                len(self.input_nodes), len(inputs)))
+        for k, v in zip(self.input_nodes, inputs):
+            self.values[k] = v
+        for node, act_func, bias, response, links in self.node_evals:
+            node_inputs = []
+            for i, w in links:
+                node_inputs.append(self.values[i] * w)
+            s = sum(node_inputs)
+            self.values[node] = act_func(bias + response * s)
+        return [self.values[i] for i in self.output_nodes]
+
+    @staticmethod
+    def create(genome):
+        # Receives genome, returns feed forward network
+        # Gather expressed connections.
+        connections = [cg.key for cg in itervalues(genome.connections) if cg.enabled]
+        layers = feed_forward_layers(genome.input_keys, genome.output_keys, connections)
+        node_evals = []
+        # Traverse layers
+        for layer in layers:
+            # For each node in each layer, collect all incoming connections to the node
+            for node in layer:
+                inputs = []
+                for conn_key in connections:
+                    input_node, output_node = conn_key
+                    if output_node == node:
+                        cg = genome.connections[conn_key]
+                        inputs.append((input_node, cg.weight))
+                # Gather node gene information
+                node_gene = genome.nodes[node]
+                activation_function = node_gene.activation
+                node_evals.append((node, activation_function, node_gene.bias, 
+                                   node_gene.response, inputs))
+
+        return FeedForwardNet(genome.input_keys, genome.output_keys, node_evals, 
+                                  genome.nodes)

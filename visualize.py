@@ -69,7 +69,6 @@ def draw_net(net, filename=None):
 
     return dot
 
-
 # Click handler for weight gradient created by a CPPN. Will re-query with the clicked coordinate.
 def onclick(event):
     plt.close()
@@ -82,7 +81,6 @@ def onclick(event):
         from pureples.es_hyperneat.es_hyperneat import find_pattern
         pattern = find_pattern(cppn, (x, y))
         draw_pattern(pattern)
-
 
 # Draws the pattern/weight gradient queried by a CPPN. 
 def draw_pattern(im, res=60):
@@ -105,7 +103,6 @@ def draw_pattern(im, res=60):
     plt.grid()
     plt.show()
 
-
 # Draw the net created by ES-HyperNEAT
 def draw_es(id_to_coords, connections, filename):
     fig = plt.figure()
@@ -124,4 +121,3 @@ def draw_es(id_to_coords, connections, filename):
 
     plt.grid()
     fig.savefig(filename)
-
