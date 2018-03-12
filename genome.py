@@ -79,7 +79,6 @@ class Genome():
 		# self.connections = genome.connections
 		# print("Copied Nodes: {}".format(self.nodes))
 		# print("Done Copying")
-		
 
 	def create_connection(self, source_key, target_key, weight=None):
 		# Create a new connection gene
@@ -199,9 +198,6 @@ class Genome():
 	def mutate_increment_depth(self):
 		# Add CPPNON to increment depth of Substrate
 		# Create CPPN tuple
-		# print("Genome {} Incrementing Depth".format(self.key))
-		# print("Genome {} Output Keys: {}".format(self.key, self.output_keys))
-		# print("Genome {} Nodes: {}".format(self.key, self.nodes))
 		source_layer = self.num_layers
 		target_layer, target_sheet, source_sheet = 0, 0, 0
 		cppn_tuple = ((source_layer, source_sheet),
@@ -231,7 +227,6 @@ class Genome():
 		self.num_outputs += 1
 		self.num_layers += 1
 		self.output_keys.append(output_node.key)
-		# print("{} Output Keys After: {}".format(self.key, self.output_keys))
 		# Add connections
 		# x1 to gauss 1
 		self.create_connection(self.input_keys[0], 
