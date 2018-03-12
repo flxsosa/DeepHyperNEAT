@@ -4,6 +4,7 @@ Class for the Deep HyperNEAT default genome and genes.
 Felix Sosa
 '''
 import numpy as np
+from random import randint
 from itertools import count
 from six_util import iteritems,itervalues,iterkeys
 from random import choice
@@ -18,7 +19,7 @@ conn_delete_prob = 0.5
 weight_mutation_rate = 0.8
 bias_mutation_rate = 0.7
 inc_depth_prob = 0.2
-inc_breadth_prob = 0
+inc_breadth_prob = 0.1
 
 class Genome():
 
@@ -42,7 +43,6 @@ class Genome():
 
 	def configure(self):
 		# Configure a new fully connected genome
-		# print("\nGenome {} being configured".format(self.key))
 		for input_id in self.input_keys:
 			for output_id in self.output_keys:
 				self.create_connection(input_id, output_id)
@@ -51,22 +51,14 @@ class Genome():
 	
 	def copy(self, genome):
 		# Copies the genes of another genome
-		# print("Copying")
 		self.node_indexer = deepcopy(genome.node_indexer)
-		# print("Node Indexer Are Same: {}".format(genome.node_indexer is self.node_indexer))
 		self.num_inputs = deepcopy(genome.num_inputs)
-		# print("Num Inputs Are Same: {}".format(genome.num_inputs is self.num_inputs))
 		self.num_outputs = deepcopy(genome.num_outputs)
-		# print("Num Outputs Are Same: {}".format(genome.num_outputs is self.num_outputs))
-		self.input_keys = deepcopy(genome.input_keys)
-		# print("Input Keys Are Same: {}".format(genome.input_keys is self.input_keys))
-		# print("Copied Genome {} Output Keys: {}".format(genome.key, genome.output_keys))
+		self.input_keys = [x for x in genome.input_keys]
 		self.output_keys = [x for x in genome.output_keys]
-		# print("Output Keys Are Same: {}".format(genome.output_keys is self.output_keys))
-		self.cppn_tuples = deepcopy(genome.cppn_tuples)
+		self.cppn_tuples = [x for x in genome.cppn_tuples]
 		self.num_layers = deepcopy(genome.num_layers)
 		# Nodes
-		# print("Copied Genome {} Nodes: {}".format(genome.key, genome.nodes))
 		for node_copy in genome.nodes.values():
 			node_to_add = NodeGene(node_copy.key,node_copy.type,
 								   node_copy.activation, node_copy.cppn_tuple)
@@ -76,17 +68,12 @@ class Genome():
 		for conn_copy in genome.connections.values():
 			conn_to_add = ConnectionGene(conn_copy.key, conn_copy.weight)
 			self.connections[conn_to_add.key] = conn_to_add
-		# self.connections = genome.connections
-		# print("Copied Nodes: {}".format(self.nodes))
-		# print("Done Copying")
 
 	def create_connection(self, source_key, target_key, weight=None):
 		# Create a new connection gene
 		if not weight:
 			weight = np.random.uniform(-1,1)
-			# print(weight)
 		new_conn = ConnectionGene((source_key,target_key), weight)
-		# print(new_conn.weight)
 		self.connections[new_conn.key] = new_conn
 		return new_conn
 
@@ -97,10 +84,6 @@ class Genome():
 		new_node_key = self.get_new_node_key() if key == None else key
 		new_node = NodeGene(new_node_key, node_type, activation, cppn_tuple)
 		self.nodes[new_node.key] = new_node
-		# if node_type == 'out':
-			# print('\n{} New Output Node {}'.format(self.key, new_node.key))
-			# print('{} Nodes in Genome: {}'.format(self.key, self.nodes))
-			# print('{} Current Output Nodes: {}'.format(self.key, self.output_keys))
 		return new_node
 
 	def mutate(self):
@@ -154,16 +137,13 @@ class Genome():
 		target_key = choice(possible_targets)
 		possible_sources = possible_targets + self.input_keys
 		source_key = choice(possible_sources)
-
 		# Ensure connection isn't duplicate
 		if (source_key,target_key) in self.connections:
 			self.connections[(source_key,target_key)].enabled = True
 			return
-
 		# Don't allow connections between two output nodes
 		if source_key in self.output_keys and target_key in self.output_keys:
 			return
-
 		new_conn = self.create_connection(source_key, target_key)
 		self.connections[new_conn.key] = new_conn
 
@@ -172,7 +152,6 @@ class Genome():
 		available_nodes = [k for k in iterkeys(self.nodes) if k not in self.output_keys]
 		if not available_nodes:
 			return
-
 		# Choose random node to delete
 		del_key = np.random.choice(available_nodes)
 		# Iterate through all connections and find connections to node
@@ -180,10 +159,8 @@ class Genome():
 		for k, v in iteritems(self.connections):
 			if del_key in v.key:
 				conn_to_delete.add(v.key)
-
 		for i in conn_to_delete:
 			del self.connections[i]
-
 		# Delete node key
 		del self.nodes[del_key]
 		return del_key
@@ -252,8 +229,52 @@ class Genome():
 
 	def mutate_increment_breadth(self):
 		# Add CPPNON to increment breadth of Substrate
-		pass
-	
+		# Can only expand a layer with more sheets if there is a hidden layer
+		if self.num_layers <= 2:
+			self.mutate_increment_depth()
+		else:
+			layer = randint(2,self.num_layers-1)
+			# Find out how many sheets are represented by current CPPNONs
+			num_sheets = len([x for x in self.output_keys if self.nodes[x].cppn_tuple[0][0] == layer])
+			sheet = randint(0,num_sheets-1)
+			copied_sheet = (layer, sheet)
+			keys_to_append = []
+			# Search for CPPNONs that contain the copied sheet
+			for key in self.output_keys:
+				# Create CPPNONs to represent outgoing connections
+				if self.nodes[key].cppn_tuple[0] == copied_sheet:
+					# create new cppn node for newly copied sheet
+					cppn_tuple = ((layer,num_sheets),
+								   self.nodes[key].cppn_tuple[1])
+					output_node = self.create_node('out', cppn_tuple)
+					output_node.activation = self.nodes[key].activation
+					output_node.bias = self.nodes[key].bias
+					keys_to_append.append(output_node.key)
+					# Create connections in CPPN and halve existing connections
+					for conn in list(self.connections):
+						if conn[1] == key:
+							self.connections[conn].weight /= 2.0
+							self.create_connection(conn[0], output_node.key, 
+												self.connections[conn].weight)
+
+				# Create CPPNONs to represent the incoming connections
+				if self.nodes[key].cppn_tuple[1] == copied_sheet:
+					# create new cppn node for newly copied sheet
+					cppn_tuple = (self.nodes[key].cppn_tuple[0],
+								  (layer,num_sheets))
+					output_node = self.create_node('out', cppn_tuple)
+					output_node.activation = self.nodes[key].activation
+					output_node.bias = self.nodes[key].bias
+					keys_to_append.append(output_node.key)
+					# Create connections in CPPN
+					for conn in list(self.connections):
+						if conn[1] == key:
+							self.create_connection(conn[0], output_node.key, 
+												self.connections[conn].weight)      
+			# Add new CPPNONs to genome
+			self.num_outputs += len(keys_to_append)
+			self.output_keys.extend(keys_to_append)
+
 	def get_new_node_key(self):
 		# Returns new node key
 		if self.node_indexer is None:
