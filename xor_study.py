@@ -42,6 +42,7 @@ substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
 
 print("Winner Genome: {0} with Fitness {1}".format(winner_genome.key, 
 	  winner_genome.fitness))
+print("Output Nodes: {}".format(winner_genome.output_keys))
 for node in winner_genome.nodes.values():
 	print("Node {0} of type {1}".format(node.key, node.activation))
 
