@@ -1,5 +1,7 @@
 # Deep HyperNEAT: Open-ended evolution of deep neural networks
-Project Headed by Felix Sosa and Kenneth Stanley
+Project Headed by Felix Sosa and Kenneth Stanley. Code maintained by Felix Sosa.
+Written in python 2.7
+Dependencies: numpy
 
 ## Primary Modules
 
