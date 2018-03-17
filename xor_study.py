@@ -27,19 +27,14 @@ def xor(genomes):
 			sum_square_error += ((actual_output - expected)**2.0)/4.0
 		genome.fitness = 1.0 - sum_square_error
 
-winner_genome = pop.run_and_complexify(xor,num_generations)
-# print("Ancestry:\n")
-# for item in winner_genome.ancestors:
-# 	print(item)
+winner_genome = pop.run_with_speciation(xor,num_generations)
+
 # Decode winner into CPPN and Substrate
 cppn = CPPN.create(winner_genome)
 substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
 
 print("\nChampion Genome: {} with Fitness {}\n".format(winner_genome.key, 
 	  winner_genome.fitness))
-# print("Output Nodes: {}".format(winner_genome.output_keys))
-# for node in winner_genome.nodes.values():
-# 	print("Node {0} of type {1}".format(node.key, node.activation))
 
 cppn = CPPN.create(winner_genome)
 substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
