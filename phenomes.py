@@ -86,29 +86,19 @@ class FeedForwardCPPN(object):
         if len(self.input_nodes) != len(inputs):
             raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(
                                 len(self.input_nodes), len(inputs)))
-
         for k, v in zip(self.input_nodes, inputs):
             self.values[k] = v
         for node, act_func, bias, response, links in self.node_evals:
             node_inputs = []
             for i, w in links:
                 node_inputs.append(self.values[i] * w)
-            # print
-            # print("Node:", act_func)
-            # print("Node Inputs", node_inputs)
             s = sum(node_inputs)
             self.values[node] = act_func(bias + response * s)
-        # print("CPPN given Inputs {},{},{},{}".format(
-        #         self.values[-1],self.values[-2],
-        #         self.values[-3],self.values[-4]))
         return self.values
 
     @staticmethod
     def create(genome):
-        # Receives genome, returns feed forward network
-        # Gather expressed connections.
         connections = [cg.key for cg in itervalues(genome.connections) if cg.enabled]
-
         layers = feed_forward_layers(genome.input_keys, genome.output_keys, connections)
         node_evals = []
         # Traverse layers
@@ -126,14 +116,10 @@ class FeedForwardCPPN(object):
                 activation_function = node_gene.activation
                 node_evals.append((node, activation_function, node_gene.bias, 
                                    node_gene.response, inputs))
-
         return FeedForwardCPPN(genome.input_keys, genome.output_keys, node_evals, 
                                   genome.nodes)
 
 class FeedForwardSubstrate(object):
-    '''
-    Class for a feed forward Substrate
-    '''
     def __init__(self, inputs, outputs, node_evals):
         self.input_nodes = inputs
         self.output_nodes = outputs
@@ -144,27 +130,20 @@ class FeedForwardSubstrate(object):
         if len(self.input_nodes) != len(inputs):
             raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(
                                         len(self.input_nodes), len(inputs)))
-
         for k, v in zip(self.input_nodes, inputs):
             self.values[k] = v
-        
         evaluations = self.node_evals[::-1]
-        
         for node, act_func, agg_func, bias, response, links in evaluations:
             node_inputs = []
             for i, w in links:
                 node_inputs.append(self.values[i] * w)
             s = agg_func(node_inputs)
             self.values[node] = act_func(bias + response * s)
-
         return [self.values[i] for i in self.output_nodes]
 
     @staticmethod
     def create(genome):
-        # Receives genome, returns feed forward network
-        # Gather expressed connections.
         connections = [cg.key for cg in itervalues(genome.connections) if cg.enabled]
-
         layers = feed_forward_layers(genome.input_keys, genome.output_keys, connections)
         node_evals = []
         # Traverse layers
@@ -182,14 +161,10 @@ class FeedForwardSubstrate(object):
                 activation_function = node_gene.activation
                 node_evals.append((node, activation_function, node_gene.bias, 
                                    node_gene.response, inputs))
-
         return FeedForwardCPPN(genome.input_keys, genome.output_keys, node_evals, 
                                   genome.nodes)
 
 class FeedForwardNet(object):
-    '''
-    Class for a feed forward CPPN
-    '''
     def __init__(self, inputs, outputs, node_evals, nodes=None):
         self.input_nodes = inputs
         self.output_nodes = outputs
@@ -213,8 +188,6 @@ class FeedForwardNet(object):
 
     @staticmethod
     def create(genome):
-        # Receives genome, returns feed forward network
-        # Gather expressed connections.
         connections = [cg.key for cg in itervalues(genome.connections) if cg.enabled]
         layers = feed_forward_layers(genome.input_keys, genome.output_keys, connections)
         node_evals = []
@@ -233,6 +206,5 @@ class FeedForwardNet(object):
                 activation_function = node_gene.activation
                 node_evals.append((node, activation_function, node_gene.bias, 
                                    node_gene.response, inputs))
-
         return FeedForwardNet(genome.input_keys, genome.output_keys, node_evals, 
                                   genome.nodes)
