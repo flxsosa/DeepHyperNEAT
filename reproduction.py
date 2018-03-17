@@ -4,13 +4,24 @@ Deep HyperNEAT
 
 Felix Sosa
 '''
+import random
+from math import ceil
 from genome import Genome
+from stagnation import Stagnation
 from itertools import count
+from math_util import mean
+from six_util import itervalues, iteritems
 
 class Reproduction():
 
 	def __init__(self):
 		self.genome_indexer = count(1)
+		self.reporters = None
+		# Number of elites allowed to be cloned into species each gen
+		self.species_elitism = 1
+		self.stagnation = Stagnation(self.species_elitism)
+		# Fraction of members of a species allowed to reproduce each gen
+		self.species_reproduction_threshold = 0.2
 
 	def create_new_population(self, num_genomes):
 		new_genomes = {}
@@ -42,7 +53,7 @@ class Reproduction():
 			curr_size = prev_size
 			# If species sees large increase in fitness, increase accordingly
 			if abs(count) > 0:
-				curr_size += c
+				curr_size += count
 			# If species marginally improves, increase size by 1
 			elif difference > 0:
 				curr_size += 1
@@ -54,113 +65,89 @@ class Reproduction():
 		# Normalize the amounts so that the next generation is roughly
 		# the population size requested by the user.
 		total_spawn = sum(species_sizes)
-		norm = pop_size / total_spawn
+		norm = pop_size/total_spawn
 		species_sizes = [max(min_species_size, int(round(n * norm))) for n in species_sizes]
-
+		# print(species_sizes)
 		return species_sizes
 
-	def reproduce(self, config, species, pop_size, generation):
-		"""
-		Handles creation of genomes, either from scratch or by sexual or
-		asexual reproduction from parents.
-		"""
-		# TODO: I don't like this modification of the species and stagnation objects,
-		# because it requires internal knowledge of the objects.
-
-		# Filter out stagnated species, collect the set of non-stagnated
-		# species members, and compute their average adjusted fitness.
-		# The average adjusted fitness scheme (normalized to the interval
-		# [0, 1]) allows the use of negative fitness values without
-		# interfering with the shared fitness scheme.
+	def reproduce_with_species(self, species_set, pop_size, generation):
+		# Creates and speciates genomes
 		all_fitnesses = []
 		remaining_species = []
-		for stag_sid, stag_s, stagnant in self.stagnation.update(species, generation):
-			if stagnant:
-				self.reporters.species_stagnant(stag_sid, stag_s)
+		# Traverse species and grab fitnesses from non-stagnated species
+		for sid, species, species_is_stagnant in self.stagnation.update(species_set, 
+																		generation):
+			if species_is_stagnant:
+				# self.reporters.species_stagnant(sid, species)
+				pass
 			else:
-				all_fitnesses.extend(m.fitness for m in itervalues(stag_s.members))
-				remaining_species.append(stag_s)
-        # The above comment was not quite what was happening - now getting fitnesses
-        # only from members of non-stagnated species.
+				# Add fitnesses of members of current species
+				all_fitnesses.extend(member.fitness for member in 
+									 itervalues(species.members))
+				remaining_species.append(species)
+		# No species
+		if not remaining_species:
+			species_set.species = {}
+			return {}
+		# Find min/max fitness across entire population
+		min_population_fitness = min(all_fitnesses)
+		max_population_fitness = max(all_fitnesses)
+		# Do not allow the fitness range to be zero, as we divide by it below.
+		population_fitness_range = max(1.0, max_population_fitness - min_population_fitness)
+		# Compute adjusted fitness and record minimum species size
+		for species in remaining_species:
+			# Determine current species average fitness
+			mean_species_fitness = mean([member.fitness for member in 
+										itervalues(species.members)])
+			# Determine current species adjusted fitness and update it
+			species_adjusted_fitness = (mean_species_fitness-
+				  min_population_fitness)/population_fitness_range
+			species.adjusted_fitness = species_adjusted_fitness
+		adjusted_fitnesses = [species.adjusted_fitness for species in remaining_species]
+		avg_adjusted_fitness = mean(adjusted_fitnesses)
+		# Compute the number of new members for each species in the new generation.
+		previous_sizes = [len(species.members) for species in remaining_species]
+		min_species_size = max(2, self.species_elitism)
+		spawn_amounts = self.compute_species_sizes(adjusted_fitnesses, previous_sizes,
+												   pop_size, min_species_size)
+		new_population = {}
+		species_set.species = {}
+		for spawn, species in zip(spawn_amounts, remaining_species):
+			# If elitism is enabled, each species always at least gets to retain its elites.
+			spawn = max(spawn, self.species_elitism)
+			assert spawn > 0
+			# The species has at least one member for the next generation, so retain it.
+			old_species_members = list(iteritems(species.members))
+			# Update species with blank slate
+			species.members = {}
+			# Update species in species set accordingly
+			species_set.species[species.key] = species
+			# Sort old species members in order of descending fitness.
+			old_species_members.sort(reverse=True, key=lambda x: x[1].fitness)
+			# Clone elites to new generation.
+			if self.species_elitism > 0:
+				for member_key, member in old_species_members[:self.species_elitism]:
+					new_population[member_key] = member
+					spawn -= 1
+			# If the species only has room for the elites, move onto next species
+			if spawn <= 0: continue
+			# Only allow fraction of species members to reproduce
+			reproduction_cutoff = int(ceil(self.species_reproduction_threshold *
+									  len(old_species_members)))
+			# Use at least two parents no matter what the threshold fraction result is.
+			reproduction_cutoff = max(reproduction_cutoff, 2)
+			old_species_members = old_species_members[:reproduction_cutoff]
 
-        # No species left.
-        if not remaining_species:
-            species.species = {}
-            return {} # was []
-
-        # Find minimum/maximum fitness across the entire population, for use in
-        # species adjusted fitness computation.
-        min_fitness = min(all_fitnesses)
-        max_fitness = max(all_fitnesses)
-        # Do not allow the fitness range to be zero, as we divide by it below.
-        # TODO: The ``1.0`` below is rather arbitrary, and should be configurable.
-        fitness_range = max(1.0, max_fitness - min_fitness)
-        for afs in remaining_species:
-            # Compute adjusted fitness.
-            msf = mean([m.fitness for m in itervalues(afs.members)])
-            af = (msf - min_fitness) / fitness_range
-            afs.adjusted_fitness = af
-
-        adjusted_fitnesses = [s.adjusted_fitness for s in remaining_species]
-        avg_adjusted_fitness = mean(adjusted_fitnesses) # type: float
-        self.reporters.info("Average adjusted fitness: {:.3f}".format(avg_adjusted_fitness))
-
-        # Compute the number of new members for each species in the new generation.
-        previous_sizes = [len(s.members) for s in remaining_species]
-        min_species_size = self.reproduction_config.min_species_size
-        # Isn't the effective min_species_size going to be max(min_species_size,
-        # self.reproduction_config.elitism)? That would probably produce more accurate tracking
-        # of population sizes and relative fitnesses... doing. TODO: document.
-        min_species_size = max(min_species_size,self.reproduction_config.elitism)
-        spawn_amounts = self.compute_species_sizes(adjusted_fitnesses, previous_sizes,
-                                           pop_size, min_species_size)
-
-        new_population = {}
-        species.species = {}
-        for spawn, s in zip(spawn_amounts, remaining_species):
-            # If elitism is enabled, each species always at least gets to retain its elites.
-            spawn = max(spawn, self.reproduction_config.elitism)
-
-            assert spawn > 0
-
-            # The species has at least one member for the next generation, so retain it.
-            old_members = list(iteritems(s.members))
-            s.members = {}
-            species.species[s.key] = s
-
-            # Sort members in order of descending fitness.
-            old_members.sort(reverse=True, key=lambda x: x[1].fitness)
-
-            # Transfer elites to new generation.
-            if self.reproduction_config.elitism > 0:
-                for i, m in old_members[:self.reproduction_config.elitism]:
-                    new_population[i] = m
-                    spawn -= 1
-
-            if spawn <= 0:
-                continue
-
-            # Only use the survival threshold fraction to use as parents for the next generation.
-            repro_cutoff = int(math.ceil(self.reproduction_config.survival_threshold *
-                                         len(old_members)))
-            # Use at least two parents no matter what the threshold fraction result is.
-            repro_cutoff = max(repro_cutoff, 2)
-            old_members = old_members[:repro_cutoff]
-
-            # Randomly choose parents and produce the number of offspring allotted to the species.
-            while spawn > 0:
-                spawn -= 1
-
-                parent1_id, parent1 = random.choice(old_members)
-                parent2_id, parent2 = random.choice(old_members)
-
-                # Note that if the parents are not distinct, crossover will produce a
-                # genetically identical clone of the parent (but with a different ID).
-                gid = next(self.genome_indexer)
-                child = config.genome_type(gid)
-                child.configure_crossover(parent1, parent2, config.genome_config)
-                child.mutate(config.genome_config)
-                new_population[gid] = child
-                self.ancestors[gid] = (parent1_id, parent2_id)
-
-        return new_population
+			# Randomly choose parents and produce the number of offspring allotted to the species.
+			# Asexual reproduction for now
+			while spawn > 0:
+				spawn -= 1
+				parent1_key, parent1 = random.choice(old_species_members)
+				# parent2_key, parent2 = random.choice(old_species_members)
+				child_key = next(self.genome_indexer)
+				child = Genome(child_key)
+				# child.crossover(parent1, parent2)
+				child.copy(parent1)
+				child.mutate()
+				new_population[child_key] = child
+		return new_population
