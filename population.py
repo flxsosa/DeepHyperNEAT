@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from genome import Genome
 from reproduction import Reproduction
 from six_util import iteritems,itervalues,iterkeys
+from species import SpeciesSet
 
 class Population():
 
@@ -20,11 +21,15 @@ class Population():
 		self.max_complex_genome = None
 		self.min_complex_genome = None
 		self.last_best = 0
+		self.current_gen = 0
 		self.elitism = elitism
 		self.reproduction = Reproduction()
+		self.species = SpeciesSet(3.5)
+
 		if state == None:
 			# Create new population
 			self.population = self.reproduction.create_new_population(self.size)
+			self.species.speciate(self.population,0)
 		else:
 			# Assign values from state
 			self.population, self.reproduction = state
@@ -273,4 +278,41 @@ class Population():
 		plt.xlabel("Generation")
 		plt.legend(['fitness','max_comp', 'min_comp', 'avg_comp'])
 		plt.show()
+		return self.best_genome
+
+	def run_with_speciation(self,fitness_function, generations=None):
+		self.current_gen = 0
+		goal = 0.97
+		reached_goal = False
+
+		while self.current_gen < generations and not reached_goal:
+			# Assess fitness of current population
+			fitness_function(list(iteritems(self.population)))
+			# Find best genome in current generation and update avg fitness
+			curr_best = None
+			for genome in itervalues(self.population):
+				if curr_best is None or genome.fitness > curr_best.fitness:
+					curr_best = genome
+			# Update global best genome if possible
+			if self.best_genome is None or curr_best.fitness > self.best_genome.fitness:
+				self.best_genome = curr_best
+			# Reached fitness goal, we can stop
+			if self.best_genome.fitness > goal:
+				reached_goal = True
+			# Create new unspeciated popuation based on current population's fitness
+			self.population = self.reproduction.reproduce_with_species(self.species,
+																	   self.size, 
+																	   self.current_gen)
+			# Check for species extinction (species did not perform well)
+			if not self.species.species:
+				raise ValueError("Species went extinct")
+		
+			# Speciate new population
+			self.species.speciate(self.population, self.current_gen)
+
+			print("\nCurrent Generation: {}".format(self.current_gen))
+			print("Current Best Fitness: {}".format(self.best_genome.fitness))
+			print("From Genome {}".format(self.best_genome.key))
+			self.current_gen += 1
+
 		return self.best_genome
