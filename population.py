@@ -17,6 +17,8 @@ class Population():
 		self.key = key
 		self.size = size
 		self.best_genome = None
+		self.max_complex_genome = None
+		self.min_complex_genome = None
 		self.last_best = 0
 		self.elitism = elitism
 		self.reproduction = Reproduction()
@@ -165,4 +167,110 @@ class Population():
 			plt.ylabel("Fitness")
 			plt.xlabel("Generation")
 			plt.show()
+		return self.best_genome
+
+	def run_and_complexify(self, fitness_function, generations=None):
+		current_gen = 0
+		goal = 0.97
+		reached_goal = False
+		# Plot data
+		best_y = []
+		max_complexity_y = []
+		min_complexity_y = []
+		avg_complexity_y = []
+		# Iterate for a number of generations or infinitely
+		while current_gen < generations:
+			# Average fitness
+			avg_fitness = 0
+			avg_complexity = 0
+			# Assess fitness of current population
+			fitness_function(list(iteritems(self.population)))
+			# Find best genome in current generation and update avg fitness
+			curr_best = None
+			# Find most and least complex genomes in current generation
+			# and update avg complexity
+			curr_max_complex = None
+			curr_min_complex = None
+			for genome in itervalues(self.population):
+				avg_fitness += genome.fitness
+				avg_complexity += genome.complexity()
+				
+				if curr_best is None or genome.fitness > curr_best.fitness:
+					curr_best = genome
+				
+				if curr_max_complex is None or genome.complexity() > curr_max_complex.complexity():
+					curr_max_complex = genome
+				
+				if curr_min_complex is None or genome.complexity() < curr_min_complex.complexity():
+					curr_min_complex = genome
+			
+			# Update global best genome if possible
+			if self.best_genome is None or curr_best.fitness > self.best_genome.fitness:
+				self.best_genome = curr_best
+			
+			# Update global maximum and minimum complexity genomes
+			if self.max_complex_genome is None or genome.complexity() > self.max_complex_genome.complexity():
+				self.max_complex_genome = genome
+			if self.min_complex_genome is None or genome.complexity() < self.min_complex_genome.complexity():
+				self.min_complex_genome = genome
+			
+			best_y.append(self.best_genome.fitness)
+			max_complexity_y.append(self.max_complex_genome.complexity())
+			min_complexity_y.append(self.min_complex_genome.complexity())
+			avg_complexity_y.append((avg_complexity+0.0)/self.size)
+			# Reached fitness goal, we can stop
+			if self.best_genome.fitness > goal:
+				reached_goal = True
+
+			# Return new population and continue to next generation
+			print("\nCurrent Generation: {}".format(current_gen))
+			print("Current Best Fitness: {}".format(self.best_genome.fitness))
+			print("Current Best Complexity: {}".format(self.best_genome.complexity()))
+			print("Current Max Complexity: {}".format(self.max_complex_genome.complexity()))
+			print("Current Min Complexity: {}".format(self.min_complex_genome.complexity()))
+			print("From Genome {}".format(self.best_genome.key))
+			print("Average Fitness: {}".format(avg_fitness/self.size))
+			print("Average Complexity: {}".format(avg_complexity/self.size))
+			for node in self.best_genome.nodes.values():
+				print("Node {0} of type {1}".format(node.key, node.activation))
+			for conn in self.best_genome.connections.values():
+				print("Conn {0} of weight {1}".format(conn.key, conn.weight))
+
+			# Order population by descending fitness
+			pop_by_fitness = list(iteritems(self.population))
+			pop_by_fitness.sort(reverse=True,key=lambda x: x[1].fitness)
+			# Create new population
+			new_population = {}
+			new_pop_to_add = {}
+			population_set = {}
+			# Preserve elites of current population
+			for gid, genome in pop_by_fitness[:50]:
+				new_population[gid] = genome
+
+			# for gid, genome in pop_by_fitness[2:]:
+			# 	if genome.fitness == self.best_genome.fitness:
+			# 		new_population[gid] = genome
+
+			new_population_keys = list(iterkeys(new_population))
+			print(new_population_keys)
+			# Fill in rest of new population with mutants
+			print(len(new_population))
+			for _ in range(self.size - len(new_population)):
+				# Randomly choose elite to mutate
+				idx = np.random.choice(new_population.keys())
+				mutant_key = next(self.reproduction.genome_indexer)
+				mutant = Genome(mutant_key)
+				mutant.copy(new_population[idx])
+				# print("Same?: {}".format(new_population[idx] is mutant))
+				mutant.mutate()
+				new_pop_to_add[mutant_key] = mutant
+			new_population.update(new_pop_to_add)
+			self.population = new_population
+			current_gen += 1
+		best_x = range(current_gen)
+		plt.plot(best_x, best_y, best_x, max_complexity_y, best_x, min_complexity_y,best_x, avg_complexity_y)
+		plt.ylabel("Fitness")
+		plt.xlabel("Generation")
+		plt.legend(['fitness','max_comp', 'min_comp', 'avg_comp'])
+		plt.show()
 		return self.best_genome
