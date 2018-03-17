@@ -13,6 +13,8 @@ class GenomeDistanceCache:
 		self.distances = {}
 		self.hits = 0
 		self.misses = 0
+		self.compatibility_disjoint_coefficient = 1.0
+		self.compatibility_weight_coefficient = 0.5
 
 	def __call__(self, genome0, genome1):
 		genome_key_0 = genome0.key
@@ -20,7 +22,7 @@ class GenomeDistanceCache:
 		distance = self.distances.get((genome_key_0, genome_key_1))
 		if distance is None:
 			# Distance is not already computed.
-			distance = genome_distance(genome0,genome1)
+			distance = self.genome_distance(genome0,genome1)
 			self.distances[genome_key_0, genome_key_1] = distance
 			self.distances[genome_key_1, genome_key_0] = distance
 			self.misses += 1
@@ -51,7 +53,7 @@ class GenomeDistanceCache:
 			max_nodes = max(len(genome0.nodes), len(genome1.nodes))
 			# Determine final node genetic distance
 			node_distance = (node_distance +
-								(compatibility_disjoint_coefficient *
+								(self.compatibility_disjoint_coefficient *
 								disjoint_nodes))/max_nodes
 
 		# Determine connection gene distance
@@ -73,7 +75,7 @@ class GenomeDistanceCache:
 
 			max_conn = max(len(genome0.connections), len(genome1.connections))
 			connection_distance = (connection_distance +
-									(compatibility_disjoint_coefficient *
+									(self.compatibility_disjoint_coefficient *
 									disjoint_connections)) / max_conn
 
 		distance = node_distance + connection_distance
@@ -84,12 +86,12 @@ class GenomeDistanceCache:
 		distance = abs(node_gene_0.bias-node_gene_1.bias)
 		if node_gene_0.activation != node_gene_1.activation:
 			distance += 1.0
-		return distance * compatibility_weight_coefficient
+		return distance * self.compatibility_weight_coefficient
 
 	def connection_gene_distance(self, conn_gene_0, conn_gene_1):
 		# Computes genetic distance between connection genes
 		d = abs(conn_gene_0.weight - conn_gene_1.weight)
-		return d * compatibility_weight_coefficient
+		return d * self.compatibility_weight_coefficient
 
 class Species:
 	# Class for individual species
@@ -116,11 +118,11 @@ class SpeciesSet:
 		self.threshold = threshold
 		self.species = {}
 		self.species_indexer = count(1)
+		self.genome_to_species = {}
 
 	def speciate(self,population,generation):
 		# Compatibility threshold
 		compatibility_threshold = self.threshold
-
 		# Set of unspeciated members of the population
 		unspeciated = set(iterkeys(population))
 		# Means of determining distances
@@ -128,7 +130,6 @@ class SpeciesSet:
 		# New representatives and members of species
 		new_representatives = {}
 		new_members = {}
-
 		# Traverse through set of species from last generation
 		for sid, species in iteritems(self.species):
 			# Candidates for current species representatives
@@ -137,9 +138,8 @@ class SpeciesSet:
 			# from the current species representative
 			for gid in unspeciated:
 				genome = population[gid]
-				genome_distance = distances(s.representative, genome)
+				genome_distance = distances(species.representative, genome)
 				candidate_representatives.append((genome_distance, genome))
-
 			# The new representative for the current species is the 
 			# closest to the current representative
 			_, new_rep = min(candidate_representatives, key=lambda x: x[0])
@@ -152,7 +152,6 @@ class SpeciesSet:
 		while unspeciated:
 			gid = unspeciated.pop()
 			genome = population[gid]
-
 			# Find the species with the most similar representative to the
 			# current genome from the unspeciated set
 			candidate_species = []
@@ -164,7 +163,6 @@ class SpeciesSet:
 				# If it's below threshold, add it to list for adding to the species
 				if genome_distance < compatibility_threshold:
 					candidate_species.append((genome_distance, sid))
-
 			# Add current genome to the species its most genetically similar to
 			if candidate_species:
 				_, sid = min(candidate_species, key=lambda x: x[0])
@@ -175,7 +173,6 @@ class SpeciesSet:
 				sid = next(self.species_indexer)
 				new_representatives[sid] = gid
 				new_members[sid] = [gid]
-
 			# Update species collection based on new speciation
 			self.genome_to_species = {}
 			for sid, rid in iteritems(new_representatives):
@@ -184,19 +181,17 @@ class SpeciesSet:
 				if s is None:
 					s = Species(sid, generation)
 					self.species[sid] = s
-
 				# Collect and add members to current species
 				members = new_members[sid]
 				for gid in members:
 					self.genome_to_species[gid] = sid
-
 				# Update current species members and represenative
 				member_dict = {gid:population[gid] for gid in members}
 				s.update(population[rid], member_dict)
-		
-	def get_species_id(self, individual_id):
-		return self.genome_to_species[individual_id]
 
-	def get_species(self, individual_id):
-		sid = self.genome_to_species[individual_id]
+	def get_species_key(self, key):
+		return self.genome_to_species[key]
+
+	def get_species(self, key):
+		sid = self.genome_to_species[key]
 		return self.species[sid]			
