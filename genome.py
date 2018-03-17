@@ -18,11 +18,10 @@ conn_add_prob = 0.5
 conn_delete_prob = 0.5
 weight_mutation_rate = 0.8
 bias_mutation_rate = 0.7
-inc_depth_prob = 0.2
-inc_breadth_prob = 0.1
+inc_depth_prob = 0.3
+inc_breadth_prob = 0.2
 
 class Genome():
-
 	def __init__(self, key):
 		# Unique genome identifier
 		self.key = key
@@ -39,7 +38,13 @@ class Genome():
 		self.output_keys = range(self.num_outputs)
 		self.cppn_tuples = [((1,0), (0,0))]#[((1,0),(2,0)), ((2,0),(0,0))] #
 		self.activations = ActivationFunctionSet()
+		self.ancestors = []
 		self.configure()
+		self._complexity = len(self.nodes) + len(self.connections)
+
+	def complexity(self):
+		self._complexity = len(self.nodes) + len(self.connections)
+		return self._complexity
 
 	def configure(self):
 		# Configure a new fully connected genome
@@ -58,6 +63,7 @@ class Genome():
 		self.output_keys = [x for x in genome.output_keys]
 		self.cppn_tuples = [x for x in genome.cppn_tuples]
 		self.num_layers = deepcopy(genome.num_layers)
+		self.ancestors = deepcopy(genome.ancestors)
 		# Nodes
 		for node_copy in genome.nodes.values():
 			node_to_add = NodeGene(node_copy.key,node_copy.type,
@@ -103,10 +109,10 @@ class Genome():
 
 		# Mutate connection genes.
 		for conn_gene in self.connections.values():
-			conn_gene.mutate()
+			conn_gene.mutate(self)
 		# Mutate node genes (bias, response, etc.).
 		for node_gene in self.nodes.values():
-			node_gene.mutate()
+			node_gene.mutate(self)
 
 	def mutate_add_node(self):
 		# Add new node to the genome
@@ -127,6 +133,7 @@ class Genome():
 		i, o = conn_to_split
 		self.create_connection(i, new_node.key, 1.0)
 		self.create_connection(new_node.key, o, old_weight)
+		self.ancestors.append("Mutation: Added Node {}".format(new_node.key))
 
 	def mutate_add_connection(self):
 		# Add a new connection to the genome
@@ -146,6 +153,7 @@ class Genome():
 			return
 		new_conn = self.create_connection(source_key, target_key)
 		self.connections[new_conn.key] = new_conn
+		self.ancestors.append("Mutation: Added Connection {} of weight {}".format(new_conn.key,new_conn.weight))
 
 	def mutate_delete_node(self):
 		# Delete a node
@@ -163,6 +171,7 @@ class Genome():
 			del self.connections[i]
 		# Delete node key
 		del self.nodes[del_key]
+		self.ancestors.append("Mutation: Deleted Node {}".format(del_key))
 		return del_key
 
 	def mutate_delete_connection(self):
@@ -171,6 +180,7 @@ class Genome():
 			idx = np.random.choice(range(len(self.connections)))
 			key = list(self.connections.keys())[idx]
 			del self.connections[key]
+			self.ancestors.append("Mutation: Deleted Connection {}".format(key))
 	
 	def mutate_increment_depth(self):
 		# Add CPPNON to increment depth of Substrate
@@ -275,6 +285,26 @@ class Genome():
 			self.num_outputs += len(keys_to_append)
 			self.output_keys.extend(keys_to_append)
 
+	def mutate_add_mapping(self):
+		# Adds connection mapping between two sheets previously
+		# not connected
+		layer_1 = 1#randint(1,self.num_layers-1)
+		layer_2 = 0#randint(0,self.num_layers-1)
+		num_sheets_1 = len([x for x in self.output_keys if self.nodes[x].cppn_tuple[0][0] == layer_1])
+		num_sheets_2 = len([x for x in self.output_keys if self.nodes[x].cppn_tuple[0][0] == layer_2])
+		sheet_1 = 0#randint(0,num_sheets_1-1)
+		sheet_2 = 0 #if layer_2 == 0 else randint(0,num_sheets_2-1)
+
+		source_sheet = (layer_1, sheet_1)
+		target_sheet = (layer_2, sheet_2)
+
+		cppn_tuple = (source_sheet, target_sheet)
+		output_node = self.create_node('out', cppn_tuple)
+		self.output_keys.append(output_node.key)
+		print("Added node {} with tuple {}".format(output_node.key, output_node.cppn_tuple))
+		for input_id in self.input_keys:
+			self.create_connection(input_id, output_node.key)
+
 	def get_new_node_key(self):
 		# Returns new node key
 		if self.node_indexer is None:
@@ -284,7 +314,6 @@ class Genome():
 		return new_id
 
 class NodeGene():
-
 	def __init__(self,key,node_type,activation,cppn_tuple):
 		self.type = node_type
 		self.key = key
@@ -293,20 +322,22 @@ class NodeGene():
 		self.response = 1.0
 		self.cppn_tuple = cppn_tuple
 
-	def mutate(self):
+	def mutate(self,g):
 		# Mutate attributes of node gene
 		if np.random.uniform() < bias_mutation_rate:
-			self.bias += np.random.uniform(-0.5,0.5)
-		# self.response += np.random.uniform(-0.1,0.1)
+			chg = np.random.uniform(-0.5,0.5)
+			g.ancestors.append('Bias {} change from {} to {}'.format(self.key, self.bias, (self.bias+chg)))
+			self.bias += chg
 
 class ConnectionGene():
-
 	def __init__(self,key,weight):
 		self.key = key
 		self.weight = weight
 		self.enabled = True
 
-	def mutate(self):
+	def mutate(self,g):
 		# Mutate attributes of connection gene
 		if np.random.uniform() < weight_mutation_rate:
-			self.weight += np.random.uniform(-5,5)
+			chg = np.random.uniform(-5,5)
+			g.ancestors.append('Weight {} change from {} to {}'.format(self.key, self.weight, (self.weight+chg)))
+			self.weight += chg
