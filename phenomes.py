@@ -133,12 +133,12 @@ class FeedForwardSubstrate(object):
         for k, v in zip(self.input_nodes, inputs):
             self.values[k] = v
         evaluations = self.node_evals[::-1]
-        for node, act_func, agg_func, bias, response, links in evaluations:
+        for node, act_func, agg_func, bias, links in evaluations:
             node_inputs = []
             for i, w in links:
                 node_inputs.append(self.values[i] * w)
             s = agg_func(node_inputs)
-            self.values[node] = act_func(bias + response * s)
+            self.values[node] = act_func(bias + s)
         return [self.values[i] for i in self.output_nodes]
 
     @staticmethod
@@ -160,10 +160,60 @@ class FeedForwardSubstrate(object):
                 node_gene = genome.nodes[node]
                 activation_function = node_gene.activation
                 node_evals.append((node, activation_function, node_gene.bias, 
-                                   node_gene.response, inputs))
+                                   inputs))
         return FeedForwardCPPN(genome.input_keys, genome.output_keys, node_evals, 
                                   genome.nodes)
 
+class FeedForwardSubstrateWithBias(object):
+    def __init__(self, inputs, bias, outputs, node_evals):
+        # print(inputs)
+        # print(bias)
+        # print(outputs)
+        self.input_nodes = inputs
+        self.bias_node = bias
+        self.output_nodes = outputs
+        self.node_evals = node_evals
+        self.values = dict((key, 0.0) for key in inputs + outputs)
+
+    def activate(self, inputs):          
+        if len(self.input_nodes+self.bias_node) != len(inputs):
+            raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(
+                                        len(self.input_nodes), len(inputs)))
+        for k, v in zip(self.input_nodes, inputs[:len(self.input_nodes)]):
+            self.values[k] = v
+        self.values[self.bias_node[0]] = inputs[-1]
+        evaluations = self.node_evals[::-1]
+        for node, act_func, agg_func, bias, links in evaluations:
+            node_inputs = []
+            for i, w in links:
+                node_inputs.append(self.values[i] * w)
+            s = agg_func(node_inputs)
+            self.values[node] = act_func(bias + s)
+        return [self.values[i] for i in self.output_nodes]
+
+    @staticmethod
+    def create(genome):
+        connections = [cg.key for cg in itervalues(genome.connections) if cg.enabled]
+        layers = feed_forward_layers(genome.input_keys, genome.output_keys, connections)
+        node_evals = []
+        # Traverse layers
+        for layer in layers:
+            # For each node in each layer, collect all incoming connections to the node
+            for node in layer:
+                inputs = []
+                for conn_key in connections:
+                    input_node, output_node = conn_key
+                    if output_node == node:
+                        cg = genome.connections[conn_key]
+                        inputs.append((input_node, cg.weight))
+                # Gather node gene information
+                node_gene = genome.nodes[node]
+                activation_function = node_gene.activation
+                node_evals.append((node, activation_function, node_gene.bias, 
+                                   inputs))
+        return FeedForwardCPPN(genome.input_keys, genome.bias_key, genome.output_keys, node_evals, 
+                                  genome.nodes)
+        
 class FeedForwardNet(object):
     def __init__(self, inputs, outputs, node_evals, nodes=None):
         self.input_nodes = inputs
