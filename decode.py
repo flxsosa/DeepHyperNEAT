@@ -6,119 +6,84 @@ Felix Sosa
 
 import numpy as np
 import itertools as it
-import activations
+from activations import ActivationFunctionSet
 from phenomes import FeedForwardSubstrate
 
 
-def decode(cppn, sub_input_dimensions, sub_outputs, sheet_dimensions=None):
-    # Get x and y coordinates for Substrate input layer and create layer
-    if sub_input_dimensions[1] == 1:
-        x = [0.0]
-    elif sub_input_dimensions[1] > 1:
-        x = np.linspace(-1.0, 1.0, sub_input_dimensions[1])
-
-    if sub_input_dimensions[0] == 1:
-        y = [0.0]
-    elif sub_input_dimensions[0] > 1:
-        y = np.linspace(-1.0, 1.0, sub_input_dimensions[0])
+def decode(cppn, sub_in_dims, sub_outputs, sheet_dims=None):
+    # Decodes CPPN into a Substrate
+    # Input layer coordinate map
+    x = np.linspace(-1.0, 1.0, sub_in_dims[1]) if (sub_in_dims[1] 
+                                                   > 1) else [0.0]
+    y = np.linspace(-1.0, 1.0, sub_in_dims[0]) if (sub_in_dims[0] 
+                                                   > 1) else [0.0]
     sub_input_layer = list(it.product(x,y))
-
-    if sub_outputs == 1:
-        x = [0.0]
-    elif sub_outputs > 1:
-        x = np.linspace(-1.0,1.0,sub_outputs)
+    # Output layer coordinate map
+    x = np.linspace(-1.0,1.0,sub_outputs) if sub_outputs > 1 else [0.0]
     y = [0.0]
     sub_out_layer = list(it.product(x,y))
-
     # Check if sheet dimensions have been provided
-    if sheet_dimensions:
-        if sheet_dimensions[1] == 1:
-            x = [1.0]
-        elif sheet_dimensions[1] > 1:
-            x = np.linspace(-1.0, 1.0, sheet_dimensions[1])
-
-        if sheet_dimensions[0] == 1:
-            y = [0.0]
-        elif sheet_dimensions[0] > 1:
-            y = np.linspace(-1.0, 1.0, sheet_dimensions[0])
+    if sheet_dims:
+        x = np.linspace(-1.0, 1.0, sheet_dims[1]) if (sheet_dims[1] 
+                                                      > 1) else [0.0]
+        y = np.linspace(-1.0, 1.0, sheet_dims[0]) if (sheet_dims[0] 
+                                                      > 1) else [0.0]
         sheet = list(it.product(x,y))
     else:
         sheet = sub_input_layer
-
-    # Initialize substrate with input (1,0) and output (0,0) layers
-    # Should do dict comprehension
-    substrate = {
-        (0,0): sub_out_layer,
-        (1,0): sub_input_layer
-    }
-    # print(substrate)
     # Create a list of connection mappings
-    connection_mappings = []
+    connection_mappings = [cppn.nodes[x].cppn_tuple for x in cppn.output_nodes]
+    # Create substrate representation (dictionary of sheets)
+    hidden_sheets = {cppn.nodes[node].cppn_tuple[0] for node in cppn.output_nodes}
+    substrate = {s:sheet for s in hidden_sheets}
+    substrate[(1,0)] = sub_input_layer
+    substrate[(0,0)] = sub_out_layer
 
-    # Traverse CPPN Output Nodes (CPPNONs) and add layers and sheets to the substrate
-    for node in cppn.output_nodes:
-        # Add cppn_tuple to connection mapping list
-        connection_mappings.append(cppn.nodes[node].cppn_tuple)
-        if cppn.nodes[node].cppn_tuple[0] not in substrate:
-            substrate[cppn.nodes[node].cppn_tuple[0]] = sheet
-        if cppn.nodes[node].cppn_tuple[1] not in substrate:
-            substrate[cppn.nodes[node].cppn_tuple[1]] = sheet
-    
     return create_phenotype_network(cppn,substrate, connection_mappings)
 
-def create_phenotype_network(cppn, substrate, connection_maps, activation_function="relu"):
-    '''
-    Creates a NN using a CPPN
-    '''
-    connections = connection_maps
+def create_phenotype_network(cppn, substrate, conn_maps, act_func="relu"):
+    # Creates a neural network using a CPPN and Substrate representation
+    connections = conn_maps
     layers = {}
-    # Inititialize node evaluations
     node_evals = []
     # Gather layers in substrate
-    for i in range(len(substrate.keys())):
+    for i in range(len(substrate)):
         layers[i] = []
         for key in substrate.keys():
-            if key[0] == i and key not in layers[i]:
-                layers[i].append(key)
-        if layers[i] == []:
-            del layers[i]
-    # Assign coordinates
-    input_coordinates = (substrate[(1,0)],(1,0))
-    input_nodes = range(len(input_coordinates[0]))
-    output_coordinates = (substrate[(0,0)],(0,0))
-    output_nodes = range(len(input_nodes), len(input_nodes)+len(output_coordinates[0]))
+            if key[0] == i and key not in layers[i]: layers[i].append(key)
+        if layers[i] == []: del layers[i]
+    # Assign coordinates to input and output layers
+    in_coords = (substrate[(1,0)],(1,0))
+    out_coords = (substrate[(0,0)],(0,0))
+    in_nodes = range(len(in_coords[0]))
+    out_nodes = range(len(in_nodes), len(in_nodes + out_coords[0]))
     # Remove the input and output layers from the substrate dictionary
-    del substrate[(1,0)]
-    del substrate[(0,0)]
+    del substrate[(1,0)], substrate[(0,0)]
     # List of layers, first index = top layer.
-    hidden_coordinates = [(substrate[k], k) for k in substrate.keys()] 
-    counter = 0
-    for layer in hidden_coordinates:
-        counter += len(layer[0])
-    hidden_nodes = range(len(input_nodes)+len(output_nodes), 
-                         len(input_nodes)+len(output_nodes)+counter)
-    # Get activation function.
-    activation_functions = activations.ActivationFunctionSet()
-    activation = activation_functions.get(activation_function)
+    hid_coords = [(substrate[k], k) for k in substrate.keys()] 
+    counter = sum([len(layer[0]) for layer in hid_coords])
+    hid_idx = len(in_nodes+out_nodes)
+    hid_nodes = range(hid_idx, hid_idx+counter)
+    # Get activation function for substrate
+    act_func_set = ActivationFunctionSet()
+    activation = act_func_set.get(act_func)
     # Decode depending on whether there are hidden layers or not
-    if len(hidden_nodes) != 0:
+    if hid_nodes:
         # Output to Topmost Hidden Layer
         # Find connection mappings with output layer as target sheet
-        connection_mappings = [c for c in connections if c[1] == (0,0)]
-        counter = 0
-        idx = 0
-        hidden_idx = 0
+        conn_maps = [conn for conn in connections if conn[1] == (0,0)]
+        counter, idx, hidden_idx = 0, 0, 0
         # For each coordinate in output sheet
-        for oc in output_coordinates[0]:
+        for oc in out_coords[0]:
             im = []
             # For each connection mapping
-            for cm in connection_mappings:
-                source_sheet = cm[0]
-                im += find_neurons(cppn, oc, output_coordinates[1], 
-                                   (substrate[source_sheet], source_sheet), hidden_nodes[idx], False)  
-                idx += len(substrate[source_sheet])
+            for cm in conn_maps:
+                src_sheet = cm[0]
+                im += find_neurons(cppn, oc, out_coords[1], (substrate[src_sheet], 
+                                   src_sheet), hid_nodes[idx], False)  
+                idx += len(substrate[src_sheet])
             if im:
-                node_evals.append((output_nodes[counter], activation, sum, 0.0, 1.0, im))
+                node_evals.append((out_nodes[counter], activation, sum, 0.0, 1.0, im))
             hidden_idx = idx
             idx = 0
             counter += 1
@@ -130,83 +95,76 @@ def create_phenotype_network(cppn, substrate, connection_maps, activation_functi
             # For each sheet in the current layer, i
             for j in range(len(layers[i])):
                 # Assign the target layer
-                target_sheet = layers[i][j]
+                tgt_sheet = layers[i][j]
                 # Find connection mappings with current sheet as target sheet
-                connection_mappings = [cm for cm in connections if cm[1] == target_sheet]
+                conn_maps = [cm for cm in connections if (cm[1] == tgt_sheet)]
                 # For each coordinate in target sheet
-                for hc in substrate[target_sheet]:
+                for hc in substrate[tgt_sheet]:
                     # For each connection mapping
                     im = []
-                    for cm in connection_mappings:
-                        source_sheet = cm[0]
-                        im += find_neurons(cppn, hc, target_sheet, 
-                                           (substrate[source_sheet], source_sheet), 
-                                           hidden_nodes[idx], False)       
-                        idx += len(substrate[source_sheet])
+                    for cm in conn_maps:
+                        src_sheet = cm[0]
+                        im += find_neurons(cppn, hc, tgt_sheet, (substrate[src_sheet], 
+                                           src_sheet), hid_nodes[idx], False)       
+                        idx += len(substrate[src_sheet])
                     if im:
-                        node_evals.append((hidden_nodes[counter], activation, sum, 0.0, 1.0, im))
+                        node_evals.append((hid_nodes[counter], activation, sum, 
+                                           0.0, 1.0, im))
                     counter += 1
                     next_idx = idx
                     idx = hidden_idx
             idx = next_idx
             hidden_idx = next_idx
-        
         # Bottommost Hidden Layer to Input Layer
         # For each sheet in second layer in substrate
         idx = 0
         for i in range(len(layers[2])):
             # Assign target
-            target_sheet = layers[2][i]
+            tgt_sheet = layers[2][i]
             # For each coordinate in target sheet
-            for hc in substrate[target_sheet]:
-                im = find_neurons(cppn, hc, target_sheet, (input_coordinates[0], 
-                                  input_coordinates[1]), input_nodes[idx], False)
+            for hc in substrate[tgt_sheet]:
+                im = find_neurons(cppn, hc, tgt_sheet, (in_coords[0], 
+                                  in_coords[1]), in_nodes[idx], False)
                 if im:
-                    node_evals.append((hidden_nodes[counter], activation, sum, 0.0, 1.0, im))
+                    node_evals.append((hid_nodes[counter], activation, sum, 
+                                       0.0, 1.0, im))
                 counter += 1
     else:
         # Output Input Layer
-        idx = 0
-        counter = 0
+        idx, counter = 0, 0
         for i in range(len(layers[0])):
             # Assign target
-            target_sheet = layers[0][i]
+            tgt_sheet = layers[0][i]
             # For each coordinate in target sheet
-            for oc in output_coordinates[0]:
-                im = find_neurons(cppn, oc, output_coordinates[1], (input_coordinates[0], 
-                                  input_coordinates[1]), input_nodes[idx], False)
+            for oc in out_coords[0]:
+                im = find_neurons(cppn, oc, out_coords[1], (in_coords[0], 
+                                  in_coords[1]), in_nodes[idx], False)
                 if im:
-                    node_evals.append((output_nodes[counter], activation, sum, 0.0, 1.0, im))
+                    node_evals.append((out_nodes[counter], activation, sum, 
+                                       0.0, 1.0, im))
                 counter += 1
-    return FeedForwardSubstrate(input_nodes, output_nodes, node_evals)
+    return FeedForwardSubstrate(in_nodes, out_nodes, node_evals)
 
-def find_neurons(cppn, source_coord, source_layer, target_layer, start_idx, outgoing, max_weight=5.0):
-    '''
-    Helper function
-    '''
+def find_neurons(cppn, source_coord, source_layer, target_layer, start_idx, 
+                 outgoing, max_weight=5.0):
+    # Finds neurons able to be connected to current neuron
     im = []
     idx = start_idx
-    target_nodes = target_layer[0]
-    target_layer = target_layer[1]
+    target_nodes, target_layer = target_layer[0], target_layer[1]
     cppnon_tuple = (target_layer, source_layer)
     for target_coord in target_nodes:
         w = query_cppn(source_coord, target_coord, outgoing, cppn, cppnon_tuple, max_weight)
-        if w is not 0.0:  # Only include connection if the weight isn't 0.0.
-            im.append((idx, w))
+        if w is not 0.0: im.append((idx, w))
         idx += 1
     return im
 
 def query_cppn(coord1, coord2, outgoing, cppn, cppnon_tuple, max_weight=5.0):
-    '''
-    Helper funciton. Queries CPPN for weights in a Substrate.
-    '''
+    # Queries CPPN with two Substrate coordinates for a weight
     idx = None
-    # print([coord1[0], coord1[1], coord2[0], coord2[1]])
     for node_id in cppn.output_nodes:
         if(cppn.nodes[node_id].cppn_tuple == cppnon_tuple):
             idx = node_id
-    if idx == None:
-        return 0.0
+    if idx == None: return 0.0
     if outgoing:
         i = [coord1[0], coord1[1], coord2[0], coord2[1]]
     else:

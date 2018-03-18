@@ -12,7 +12,7 @@ from itertools import count
 from math_util import mean
 from six_util import itervalues, iteritems
 
-class Reproduction():
+class Reproduction:
 
 	def __init__(self):
 		self.genome_indexer = count(1)
