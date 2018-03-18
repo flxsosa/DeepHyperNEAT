@@ -36,7 +36,7 @@ class Genome():
 		self.num_layers = 2
 		self.input_keys = [-i - 1 for i in range(self.num_inputs)]
 		self.output_keys = range(self.num_outputs)
-		self.cppn_tuples = [((1,0), (0,0))]#[((1,0),(2,0)), ((2,0),(0,0))] #
+		self.cppn_tuples = [((1,0), (0,0))]#, ((1,1),(0,0))]#[((1,0),(2,0)), ((2,0),(0,0))] #
 		self.activations = ActivationFunctionSet()
 		self.ancestors = []
 		self.configure()
@@ -236,7 +236,8 @@ class Genome():
 		# Gauss 3 to CPPNON
 		self.create_connection(gauss_3_node.key,
 							output_node.key,1.0)
-
+		self.ancestors.append("Mutation: Added Layer {} with CPPNON {}\
+							".format(cppn_tuple, output_node.key))
 	def mutate_increment_breadth(self):
 		# Add CPPNON to increment breadth of Substrate
 		# Can only expand a layer with more sheets if there is a hidden layer
@@ -284,7 +285,8 @@ class Genome():
 			# Add new CPPNONs to genome
 			self.num_outputs += len(keys_to_append)
 			self.output_keys.extend(keys_to_append)
-
+			self.ancestors.append("Mutation: Added Sheet {} with CPPNONs {}\
+							".format((layer,num_sheets), keys_to_append))
 	def mutate_add_mapping(self):
 		# Adds connection mapping between two sheets previously
 		# not connected
