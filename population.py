@@ -24,7 +24,7 @@ class Population():
 		self.current_gen = 0
 		self.elitism = elitism
 		self.reproduction = Reproduction()
-		self.species = SpeciesSet(3.5)
+		self.species = SpeciesSet(4.5)
 
 		if state == None:
 			# Create new population
