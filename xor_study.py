@@ -35,9 +35,7 @@ substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
 
 print("\nChampion Genome: {} with Fitness {}\n".format(winner_genome.key, 
 	  winner_genome.fitness))
-print("Ancestry:")
-for anc in winner_genome.ancestors:
-	print(anc)
+
 cppn = CPPN.create(winner_genome)
 substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
 sum_square_error = 0.0
@@ -46,7 +44,7 @@ for inputs, expected in zip(xor_inputs, expected_outputs):
 	inputs = inputs# + (1.0,)
 	actual_output = substrate.activate(inputs)[0]
 	sum_square_error += ((actual_output - expected)**2.0)/4.0
-	print("Actual Output: {}\nLoss: {}".format(actual_output,sum_square_error))
+	print("Actual Output: {}\nLoss: {}\n".format(actual_output,sum_square_error))
 print("Total Loss: {}".format(sum_square_error))
 
 draw_net(cppn, filename="images/dhn_cppn")
