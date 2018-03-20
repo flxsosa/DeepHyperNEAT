@@ -11,7 +11,7 @@ from genome import Genome
 from reproduction import Reproduction
 from six_util import iteritems,itervalues,iterkeys
 from species import SpeciesSet
-
+from reporters import report_fitness, report_species
 class Population():
 
 	def __init__(self, key, size, elitism=1, state=None):
@@ -299,6 +299,8 @@ class Population():
 			# Reached fitness goal, we can stop
 			if self.best_genome.fitness > goal:
 				reached_goal = True
+			report_fitness(self)
+			report_species(self.species)
 			# Create new unspeciated popuation based on current population's fitness
 			self.population = self.reproduction.reproduce_with_species(self.species,
 																	   self.size, 
@@ -310,9 +312,6 @@ class Population():
 			# Speciate new population
 			self.species.speciate(self.population, self.current_gen)
 
-			print("\nCurrent Generation: {}".format(self.current_gen))
-			print("Current Best Fitness: {}".format(self.best_genome.fitness))
-			print("From Genome {}".format(self.best_genome.key))
 			self.current_gen += 1
 
 		return self.best_genome
