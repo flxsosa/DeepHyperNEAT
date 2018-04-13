@@ -102,6 +102,7 @@ class Species:
 		self.representative = None
 		self.members = {}
 		self.fitness = None
+		self.max_fitness = None
 		self.adjusted_fitness = None
 		self.fitness_history = []
 

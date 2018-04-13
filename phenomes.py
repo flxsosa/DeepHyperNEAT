@@ -166,9 +166,6 @@ class FeedForwardSubstrate(object):
 
 class FeedForwardSubstrateWithBias(object):
     def __init__(self, inputs, bias, outputs, node_evals):
-        # print(inputs)
-        # print(bias)
-        # print(outputs)
         self.input_nodes = inputs
         self.bias_node = bias
         self.output_nodes = outputs

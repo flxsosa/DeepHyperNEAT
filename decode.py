@@ -44,14 +44,7 @@ def decode(cppn, sub_in_dims, sub_outputs, sheet_dims=None):
 
 def create_phenotype_network(cppn, substrate, conn_maps, act_func="relu"):
     # Creates a neural network using a CPPN and Substrate representation
-    connections, layers, node_evals = conn_maps, {}, []
-    # Gather layers in substrate
-    for i in range(len(substrate)):
-        layers[i] = []
-        for key in substrate.keys():
-            if key[0] == i and key not in layers[i]: layers[i].append(key)
-        if layers[i] == []: del layers[i]
-    
+    connections, node_evals, layers = conn_maps, [], gather_layers(substrate)
     # Assign coordinates to input and output layers
     in_coords, out_coords = (substrate[(1,0)],(1,0)), (substrate[(0,0)],(0,0))
     # bias_coords = (substrate[(1,1)],(1,1))
@@ -91,6 +84,7 @@ def create_phenotype_network(cppn, substrate, conn_maps, act_func="relu"):
             hidden_idx = idx
             idx = 0
             counter += 1
+        
         # Hidden to Hidden Layers - from top to bottom
         counter = 0
         next_idx = idx = hidden_idx
@@ -118,6 +112,7 @@ def create_phenotype_network(cppn, substrate, conn_maps, act_func="relu"):
                     idx = hidden_idx
             idx = next_idx
             hidden_idx = next_idx
+        
         # Bottommost Hidden Layer to Input Layer
         idx = 0
         for i in range(len(layers[2])):
@@ -181,3 +176,12 @@ def query_cppn(coord1, coord2, outgoing, cppn, cppnon_tuple, max_weight=5.0):
         return w# * max_weight
     else:
         return 0.0
+
+def gather_layers(substrate):
+    l = {}
+    for i in range(len(substrate)):
+        l[i] = []
+        for key in substrate.keys():
+            if key[0] == i and key not in l[i]: l[i].append(key)
+        if l[i] == []: del l[i]
+    return l

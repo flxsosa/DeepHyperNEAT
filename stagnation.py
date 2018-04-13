@@ -14,7 +14,7 @@ class Stagnation:
         self.species_fitness_func = mean
         self.reporters = None
         self.species_elitism = 3
-        self.max_stagnation = 20
+        self.max_stagnation = 10
 
     def update(self, species_set, generation):
         # Updates species fitness history, checks for stagnated species,

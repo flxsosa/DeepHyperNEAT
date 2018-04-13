@@ -11,7 +11,8 @@ from genome import Genome
 from reproduction import Reproduction
 from six_util import iteritems,itervalues,iterkeys
 from species import SpeciesSet
-from reporters import report_fitness, report_species
+from reporters import report_fitness, report_species, plot_fitness, plot_complexity, report_output
+
 class Population():
 
 	def __init__(self, key, size, elitism=1, state=None):
@@ -20,11 +21,12 @@ class Population():
 		self.best_genome = None
 		self.max_complex_genome = None
 		self.min_complex_genome = None
+		self.max_dict = {}
 		self.last_best = 0
 		self.current_gen = 0
 		self.elitism = elitism
 		self.reproduction = Reproduction()
-		self.species = SpeciesSet(4.5)
+		self.species = SpeciesSet(5.0)
 
 		if state == None:
 			# Create new population
@@ -284,23 +286,59 @@ class Population():
 		self.current_gen = 0
 		goal = 0.97
 		reached_goal = False
-
+		# Plot data
+		best_fitnesses = []
+		max_complexity = []
+		min_complexity = []
+		avg_complexity = []
 		while self.current_gen < generations and not reached_goal:
 			# Assess fitness of current population
 			fitness_function(list(iteritems(self.population)))
 			# Find best genome in current generation and update avg fitness
 			curr_best = None
+			curr_max_complex = None
+			curr_min_complex = None
+			# avg_fitness = 0
+			avg_complexities = 0
 			for genome in itervalues(self.population):
+				# avg_fitness += genome.fitness
+				avg_complexities += genome.complexity()
+				# Update generation's most fit
 				if curr_best is None or genome.fitness > curr_best.fitness:
 					curr_best = genome
+				# Update generation's most complex
+				if curr_max_complex is None or genome.complexity() > curr_max_complex.complexity():
+					curr_max_complex = genome	
+				# Update generation's least complex
+				if curr_min_complex is None or genome.complexity() < curr_min_complex.complexity():
+					curr_min_complex = genome
+
 			# Update global best genome if possible
 			if self.best_genome is None or curr_best.fitness > self.best_genome.fitness:
 				self.best_genome = curr_best
+			
+			# Update global most and least complex genomes
+			if self.max_complex_genome is None or curr_max_complex.complexity() > self.max_complex_genome.complexity():
+				self.max_complex_genome = curr_max_complex
+			if self.min_complex_genome is None or curr_min_complex.complexity() < self.min_complex_genome.complexity():
+				self.min_complex_genome = curr_min_complex
+
+			self.max_dict[self.current_gen] = self.max_complex_genome
+
+			# Reporters
+			report_fitness(self)
+			report_species(self.species, self.current_gen)
+			report_output(self.best_genome)
+			best_fitnesses.append(self.best_genome.fitness)
+			max_complexity.append(self.max_complex_genome.complexity())
+			min_complexity.append(self.min_complex_genome.complexity())
+			avg_complexity.append((avg_complexities+0.0)/len(self.population))
+			avg_complexities = 0
+
 			# Reached fitness goal, we can stop
 			if self.best_genome.fitness > goal:
 				reached_goal = True
-			report_fitness(self)
-			report_species(self.species)
+			
 			# Create new unspeciated popuation based on current population's fitness
 			self.population = self.reproduction.reproduce_with_species(self.species,
 																	   self.size, 
@@ -311,7 +349,14 @@ class Population():
 		
 			# Speciate new population
 			self.species.speciate(self.population, self.current_gen)
-
 			self.current_gen += 1
-
+		
+		generations = range(self.current_gen)
+		plot_fitness(generations, best_fitnesses)
+		plot_complexity(generations, max_complexity, 
+						min_complexity,
+						avg_complexity)
+		print("Max: {}".format(max_complexity))
+		print("Avg: {}".format(avg_complexity))
+		print("Min: {}".format(min_complexity))
 		return self.best_genome

@@ -99,10 +99,13 @@ class Reproduction:
 			# Determine current species average fitness
 			mean_species_fitness = mean([member.fitness for member in 
 										itervalues(species.members)])
+			max_species_fitness = max([member.fitness for member in 
+										itervalues(species.members)])
 			# Determine current species adjusted fitness and update it
 			species_adjusted_fitness = (mean_species_fitness-
 				  min_population_fitness)/population_fitness_range
 			species.adjusted_fitness = species_adjusted_fitness
+			species.max_fitness = max_species_fitness
 		adjusted_fitnesses = [species.adjusted_fitness for species in remaining_species]
 		avg_adjusted_fitness = mean(adjusted_fitnesses)
 		# Compute the number of new members for each species in the new generation.
@@ -147,7 +150,7 @@ class Reproduction:
 				child_key = next(self.genome_indexer)
 				child = Genome(child_key)
 				# child.crossover(parent1, parent2)
-				child.copy(parent1)
-				child.mutate()
+				child.copy(parent1,generation)
+				child.mutate(generation)
 				new_population[child_key] = child
 		return new_population
