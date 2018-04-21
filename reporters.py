@@ -23,6 +23,7 @@ xor_inputs = [(0.0,0.0),(0.0,1.0),(1.0,0.0),(1.0,1.0)]
 expected_outputs = [0.0, 1.0, 1.0, 0.0]
 
 def report_output(pop):
+	genome = pop.best_genome
 	cppn = CPPN.create(genome)
 	substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
 	sum_square_error = 0.0
@@ -35,7 +36,7 @@ def report_output(pop):
 	for inputs, expected in zip(xor_inputs, expected_outputs):
 		print("Input: {}\nExpected Output: {}".format(inputs,expected))
 		fitness_file.write("Input: {}\nExpected Output: {}\n".format(inputs,expected))
-		inputs = inputs# + (1.0,)
+		inputs = inputs + (1.0,)
 		actual_output = substrate.activate(inputs)[0]
 		sum_square_error += ((actual_output - expected)**2.0)/4.0
 		print("Actual Output: {}\nLoss: {}\n".format(actual_output,sum_square_error))

@@ -292,6 +292,7 @@ class Population():
 		min_complexity = []
 		avg_complexity = []
 		while self.current_gen < generations and not reached_goal:
+			print(fitness_function)
 			# Assess fitness of current population
 			fitness_function(list(iteritems(self.population)))
 			# Find best genome in current generation and update avg fitness
@@ -306,37 +307,43 @@ class Population():
 				# Update generation's most fit
 				if curr_best is None or genome.fitness > curr_best.fitness:
 					curr_best = genome
-				# Update generation's most complex
-				if curr_max_complex is None or genome.complexity() > curr_max_complex.complexity():
-					curr_max_complex = genome	
-				# Update generation's least complex
-				if curr_min_complex is None or genome.complexity() < curr_min_complex.complexity():
-					curr_min_complex = genome
+				# # Update generation's most complex
+				# if curr_max_complex is None or genome.complexity() > curr_max_complex.complexity():
+				# 	curr_max_complex = genome	
+				# # Update generation's least complex
+				# if curr_min_complex is None or genome.complexity() < curr_min_complex.complexity():
+				# 	curr_min_complex = genome
 
 			# Update global best genome if possible
 			if self.best_genome is None or curr_best.fitness > self.best_genome.fitness:
 				self.best_genome = curr_best
 			
-			# Update global most and least complex genomes
-			if self.max_complex_genome is None or curr_max_complex.complexity() > self.max_complex_genome.complexity():
-				self.max_complex_genome = curr_max_complex
-			if self.min_complex_genome is None or curr_min_complex.complexity() < self.min_complex_genome.complexity():
-				self.min_complex_genome = curr_min_complex
+			# # Update global most and least complex genomes
+			# if self.max_complex_genome is None or curr_max_complex.complexity() > self.max_complex_genome.complexity():
+			# 	self.max_complex_genome = curr_max_complex
+			# if self.min_complex_genome is None or curr_min_complex.complexity() < self.min_complex_genome.complexity():
+			# 	self.min_complex_genome = curr_min_complex
 
 			self.max_dict[self.current_gen] = self.max_complex_genome
 
 			# Reporters
 			report_fitness(self)
-			report_species(self.species, self.current_gen)
-			report_output(self.best_genome)
+			report_species(self.species, self.current_gen,False)
+			# report_output(self)
 			best_fitnesses.append(self.best_genome.fitness)
-			max_complexity.append(self.max_complex_genome.complexity())
-			min_complexity.append(self.min_complex_genome.complexity())
-			avg_complexity.append((avg_complexities+0.0)/len(self.population))
+			# max_complexity.append(self.max_complex_genome.complexity())
+			# min_complexity.append(self.min_complex_genome.complexity())
+			# avg_complexity.append((avg_complexities+0.0)/len(self.population))
 			avg_complexities = 0
 
 			# Reached fitness goal, we can stop
 			if self.best_genome.fitness > goal:
+				print(":::")
+				print()
+				print("Tripping Fitness: {}".format(self.best_genome.fitness))
+				print("Responsible Genome: {}".format(self.best_genome))
+				print()
+				print(":::")
 				reached_goal = True
 			
 			# Create new unspeciated popuation based on current population's fitness
@@ -345,7 +352,8 @@ class Population():
 																	   self.current_gen)
 			# Check for species extinction (species did not perform well)
 			if not self.species.species:
-				raise ValueError("Species went extinct")
+				print("!!! Species went extinct !!!")
+				self.population = self.reproduction.create_new_population(self.size)
 		
 			# Speciate new population
 			self.species.speciate(self.population, self.current_gen)
@@ -353,10 +361,7 @@ class Population():
 		
 		generations = range(self.current_gen)
 		plot_fitness(generations, best_fitnesses)
-		plot_complexity(generations, max_complexity, 
-						min_complexity,
-						avg_complexity)
-		print("Max: {}".format(max_complexity))
-		print("Avg: {}".format(avg_complexity))
-		print("Min: {}".format(min_complexity))
+		# plot_complexity(generations, max_complexity, 
+		# 				min_complexity,
+		# 				avg_complexity)
 		return self.best_genome

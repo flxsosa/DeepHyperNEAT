@@ -10,7 +10,7 @@ def draw_net(net, filename=None):
 
     node_attrs = {
         'shape': 'circle',
-        'fontsize': '9',
+        'fontsize': '7',
         'height': '0.2',
         'width': '0.2'}
 
@@ -21,17 +21,45 @@ def draw_net(net, filename=None):
         inputs.add(k)
         name = node_names.get(k, str(k))
         input_attrs = {'style': 'filled', 
-                       'shape': 'box', 
+                       'shape': 'box',
+                       # 'xlabel': "BLA", 
                        'fillcolor': node_colors.get(k, 'lightgray')}
         dot.node(name, _attributes=input_attrs)
+    
+    bias = set()
+    try:
+        for k in net.bias_node:
+            bias.add(k)
+            name = node_names.get(k, str(k))
+            bias_attrs = {'style': 'filled', 
+                           'shape': 'box', 
+                           # 'xlabel': str,
+                           'fillcolor': node_colors.get(k, 'yellow')}
+            dot.node(name, _attributes=bias_attrs)
+    except:
+        pass
 
     outputs = set()
     for k in net.output_nodes:
+        # print(k)
         outputs.add(k)
         name = node_names.get(k, str(k))
-        node_attrs = {'style': 'filled', 
-                      'fillcolor': node_colors.get(k, 'lightblue')}
+        try:
+            tuple_string = str(net.output_nodes[k][0])+str(net.output_nodes[k][1])
+            node_attrs = {'style': 'filled',
+                          'label': str(k)+"\n"+tuple_string,
+                          'fillcolor': node_colors.get(k, 'lightblue'),
+                          # 'shape': 'square',
+                          'fontsize':'7',
+                          'height': '0.45',
+                          'width': '0.45',
+                          'fixedsize': 'true'}
+        except:
+            node_attrs = {'style': 'filled',
+                          # 'xlabel': str(net.output_nodes[k]),
+                          'fillcolor': node_colors.get(k, 'lightblue')}
         dot.node(name, _attributes=node_attrs)
+   
     try:
         for node, act_func, agg_func, bias, response, links in net.node_evals:
             for i, w in links:

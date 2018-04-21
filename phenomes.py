@@ -75,9 +75,10 @@ class FeedForwardCPPN(object):
     '''
     Class for a feed forward CPPN
     '''
-    def __init__(self, inputs, outputs, node_evals, nodes=None):
+    def __init__(self, inputs, outputs, node_evals, nodes=None, tuple_dict=None):
         self.input_nodes = inputs
-        self.output_nodes = outputs
+        self.output_nodes = {key:tuple_dict[key] for key in tuple_dict} if tuple_dict != None else outputs
+        # print(self.output_nodes)
         self.node_evals = node_evals
         self.values = dict((key, 0.0) for key in inputs + outputs)
         self.nodes = nodes
@@ -100,6 +101,7 @@ class FeedForwardCPPN(object):
     def create(genome):
         connections = [cg.key for cg in itervalues(genome.connections) if cg.enabled]
         layers = feed_forward_layers(genome.input_keys, genome.output_keys, connections)
+        tuple_dict = {}
         node_evals = []
         # Traverse layers
         for layer in layers:
@@ -116,8 +118,13 @@ class FeedForwardCPPN(object):
                 activation_function = node_gene.activation
                 node_evals.append((node, activation_function, node_gene.bias, 
                                    node_gene.response, inputs))
+        for key in genome.output_keys:
+            tuple_dict[key] = genome.nodes[key].cppn_tuple
+        for key in genome.bias_keys:
+            tuple_dict[key] = genome.nodes[key].cppn_tuple
+        # print(tuple_dict)
         return FeedForwardCPPN(genome.input_keys, genome.output_keys, node_evals, 
-                                  genome.nodes)
+                                  genome.nodes, tuple_dict)
 
 class FeedForwardSubstrate(object):
     def __init__(self, inputs, outputs, node_evals):
@@ -181,6 +188,7 @@ class FeedForwardSubstrateWithBias(object):
         self.values[self.bias_node[0]] = inputs[-1]
         evaluations = self.node_evals[::-1]
         for node, act_func, agg_func, bias, links in evaluations:
+            # print("Bias: {}".format(bias))
             node_inputs = []
             for i, w in links:
                 node_inputs.append(self.values[i] * w)

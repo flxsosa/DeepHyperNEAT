@@ -1,7 +1,6 @@
 from genome import Genome
 from population import Population
 from phenomes import FeedForwardCPPN as CPPN 
-from phenomes import FeedForwardSubstrate as Substrate 
 from decode import decode
 from visualize import draw_net
 from reporters import report_ancestry
@@ -23,14 +22,33 @@ def xor(genomes):
 		substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
 		sum_square_error = 0.0
 		for inputs, expected in zip(xor_inputs, expected_outputs):
-			inputs = inputs# + (1.0,)
+			inputs = inputs + (0.0,)
 			actual_output = substrate.activate(inputs)[0]
 			sum_square_error += ((actual_output - expected)**2.0)/4.0
 		genome.fitness = 1.0 - sum_square_error
 
 # Gather winning and max complexity genome
 winner_genome = pop.run_with_speciation(xor,num_generations)
-max_genome = pop.max_dict[1]
+max_genome = pop.max_complex_genome
+output_file = open("reports/generation_output.txt", "w")
+for n,g in winner_genome.prev_genomes:
+	c = CPPN.create(g)
+	s = decode(c, sub_in_dims, sub_o_dims, sub_sh_dims)
+	sum_square_error = 0.0
+	for inputs, expected in zip(xor_inputs, expected_outputs):
+		print("Genome From Generation {}".format(n))
+		output_file.write("Genome From Generation {}\n".format(n))
+		print("Input: {}\nExpected Output: {}".format(inputs,expected))
+		output_file.write("Input: {}\nExpected Output: {}\n".format(inputs,expected))
+		inputs = inputs + (0.0,)
+		actual_output = s.activate(inputs)[0]
+		sum_square_error += ((actual_output - expected)**2.0)/4.0
+		print("Actual Output: {}\nLoss: {}\n".format(actual_output,sum_square_error))
+		output_file.write("Actual Output: {}\nLoss: {}\n".format(actual_output,sum_square_error))
+	print("Total Loss: {}".format(sum_square_error))
+	output_file.write("Total Loss: {}\n\n".format(sum_square_error))
+	draw_net(c, filename="reports/champion_images/{}_cppn".format(n))
+	draw_net(s, filename="reports/champion_images/{}_substrate".format(n))
 
 # Decode winner into CPPN and Substrate
 cppn = CPPN.create(winner_genome)
@@ -47,11 +65,11 @@ draw_net(max_cppn, filename="reports/complex_images/xor_max_cppn")
 draw_net(max_substrate, filename="reports/complex_images/xor_max_substrate")
 
 print("\nChampion Genome: {} with Fitness {}\n".format(winner_genome.key, 
-	  winner_genome.fitness))
+	  											winner_genome.fitness))
 sum_square_error = 0.0
 for inputs, expected in zip(xor_inputs, expected_outputs):
 	print("Input: {}\nExpected Output: {}".format(inputs,expected))
-	inputs = inputs# + (1.0,)
+	inputs = inputs + (0.0,)
 	actual_output = substrate.activate(inputs)[0]
 	sum_square_error += ((actual_output - expected)**2.0)/4.0
 	print("Actual Output: {}\nLoss: {}\n".format(actual_output,sum_square_error))

@@ -78,6 +78,7 @@ class Reproduction:
 		for sid, species, species_is_stagnant in self.stagnation.update(species_set, 
 																		generation):
 			if species_is_stagnant:
+				print("!!! Species {} Stagnated !!!".format(sid))
 				# self.reporters.species_stagnant(sid, species)
 				pass
 			else:
