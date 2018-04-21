@@ -18,8 +18,8 @@ conn_add_prob = 0.5
 conn_delete_prob = 0.5
 weight_mutation_rate = 0.8
 bias_mutation_rate = 0.7
-inc_depth_prob = 0.3
-inc_breadth_prob = 0.1
+inc_depth_prob = 0.2
+inc_breadth_prob = 0.05
 
 class Genome():
 	def __init__(self, key):
@@ -32,13 +32,15 @@ class Genome():
 		# Genome information
 		self.fitness = None
 		self.num_inputs = 4
-		self.num_outputs = 1
+		self.num_outputs = 2
 		self.num_layers = 2
 		self.input_keys = [-i - 1 for i in range(self.num_inputs)]
 		self.output_keys = range(self.num_outputs)
-		self.cppn_tuples = [((1,0), (0,0))]#, ((1,1),(0,0))]#[((1,0),(2,0)), ((2,0),(0,0))] #
+		self.bias_keys = [1]
+		self.cppn_tuples = [((1,0), (0,0)), ((1,1),(0,0))]#[((1,0),(2,0)), ((2,0),(0,0))] #
 		self.activations = ActivationFunctionSet()
 		self.ancestors = []
+		# self.prev_genomes = []
 		self.configure()
 		self._complexity = len(self.nodes) + len(self.connections)
 		self.update_ancestry("Init")
@@ -64,6 +66,8 @@ class Genome():
 	
 	def copy(self, genome, gen):
 		# Copies the genes of another genome
+		# self.prev_genomes = deepcopy(genome.prev_genomes)
+		# self.prev_genomes.append((gen,genome))
 		self.node_indexer = deepcopy(genome.node_indexer)
 		self.num_inputs = deepcopy(genome.num_inputs)
 		self.num_outputs = deepcopy(genome.num_outputs)
@@ -72,6 +76,7 @@ class Genome():
 		self.cppn_tuples = [x for x in genome.cppn_tuples]
 		self.num_layers = deepcopy(genome.num_layers)
 		self.ancestors = deepcopy(genome.ancestors)
+		self.bias_keys = [x for x in genome.bias_keys]
 		self.nodes = {}
 		self.connections = {}
 		# Nodes
@@ -203,14 +208,32 @@ class Genome():
 	def mutate_increment_depth(self,gen=None):
 		# Add CPPNON to increment depth of Substrate
 		# Create CPPN tuple
-		source_layer = self.num_layers
-		target_layer, target_sheet, source_sheet = 0, 0, 0
+		source_layer, source_sheet = self.num_layers, 0
+		target_layer, target_sheet = 0, 0
 		cppn_tuple = ((source_layer, source_sheet),
 					  (target_layer,target_sheet))
+		b_key = None
+		# Create bias nodes
+		for bias_key in self.bias_keys:
+			if self.nodes[bias_key].cppn_tuple == ((1,1), (0,0)):
+				# Create new bias output node in CPPN
+				new_bias_output_node = self.create_node('out', ((1,1), (0,0)))
+				# Copy over activation
+				new_bias_output_node.activation = deepcopy(self.nodes[bias_key].activation)
+				# Save key
+				b_key = new_bias_output_node.key
+				# Add connections
+				for conn in list(self.connections):
+					if conn[1] == bias_key:
+						self.create_connection(conn[0], new_bias_output_node.key, 
+												0) 
+				self.output_keys.append(new_bias_output_node.key)
+		self.bias_keys.append(b_key)
+		
 		# Adjust tuples for previous CPPNONs
 		for key in self.output_keys:
 			tup = self.nodes[key].cppn_tuple
-			if tup[1] == (0,0):
+			if tup[1] == (0,0) and key != b_key:
 				self.nodes[key].cppn_tuple = (tup[0], 
 											  (source_layer,
 											   source_sheet))
@@ -257,7 +280,7 @@ class Genome():
 		self.ancestors.append("{}: Mutation: Added Layer {} with CPPNON {}\
 							".format(gen,cppn_tuple, output_node.key))
 		self.update_ancestry(gen)
-	
+		
 	def mutate_increment_breadth(self,gen=None):
 		# Add CPPNON to increment breadth of Substrate
 		# Can only expand a layer with more sheets if there is a hidden layer
@@ -270,10 +293,33 @@ class Genome():
 			sheet = randint(0,num_sheets-1)
 			copied_sheet = (layer, sheet)
 			keys_to_append = []
+			# Create bias
+			b_key = None
+			# Create bias nodes
+			for bias_key in self.bias_keys:
+				if self.nodes[bias_key].cppn_tuple == ((1,1), (0,0)):
+					# print("Found")
+					# Create new bias output node in CPPN
+					new_bias_output_node = self.create_node('out', ((1,1), (layer,num_sheets)))
+					# Copy over activation
+					new_bias_output_node.activation = deepcopy(self.nodes[bias_key].activation)
+					# Save key
+					b_key = new_bias_output_node.key
+					# Add connections
+					for conn in list(self.connections):
+						if conn[1] == bias_key:
+							self.create_connection(conn[0], new_bias_output_node.key, 
+													self.connections[conn].weight/2.0) 
+							self.connections[conn].weight /= 2.0
+					self.output_keys.append(new_bias_output_node.key)
+			self.bias_keys.append(b_key)
+			# print("Bias Keys: {}".format(self.bias_keys))
+			# print("Output Keys: {}".format(self.output_keys))
+
 			# Search for CPPNONs that contain the copied sheet
 			for key in self.output_keys:
 				# Create CPPNONs to represent outgoing connections
-				if self.nodes[key].cppn_tuple[0] == copied_sheet:
+				if self.nodes[key].cppn_tuple[0] == copied_sheet and key not in self.bias_keys:
 					# create new cppn node for newly copied sheet
 					cppn_tuple = ((layer,num_sheets),
 								   self.nodes[key].cppn_tuple[1])
@@ -289,7 +335,7 @@ class Genome():
 												self.connections[conn].weight)
 
 				# Create CPPNONs to represent the incoming connections
-				if self.nodes[key].cppn_tuple[1] == copied_sheet:
+				if self.nodes[key].cppn_tuple[1] == copied_sheet and key not in self.bias_keys:
 					# create new cppn node for newly copied sheet
 					cppn_tuple = (self.nodes[key].cppn_tuple[0],
 								  (layer,num_sheets))
