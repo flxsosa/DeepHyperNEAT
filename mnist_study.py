@@ -25,6 +25,13 @@ pop_elitism = 20
 pop = Population(0, pop_size,pop_elitism)
 num_generations = 10000
 
+import numpy as np
+
+def softmax(x):
+	"""Compute softmax values for each sets of scores in x."""
+	e_x = np.exp(x - np.max(x))
+	return e_x / e_x.sum()
+
 def sigmoid(x):
 	return 1.0/(1.0+np.exp(-x))
 
@@ -35,20 +42,17 @@ def mnist(genomes):
 	for genome_key, genome in genomes:
 		cppn = CPPN.create(genome)
 		substrate = decode(cppn,sub_input, sub_output, sub_hidden)
-		cost = 0
+		scorecard = []
 		for i in range(len(data_list)):
 			correct_label = int(data_list[i][0])
-			# print("Correct Label: {}".format(correct_label))
 			image_values = [(int(x)/255.0*0.99)+0.01 for x in data_list[i].split(',')]
 			image_values = image_values[1:]
-			image_values.append(1.0)
-			actual_label = sigmoid(substrate.activate(image_values)[0])
-			# print("Actual Label: {}".format(actual_label))
-			cost += 1.0/len(data_list)*binary_crossentropy(actual_label, correct_label)
-			# print("Cost: {}".format(cost))
-		print("Loss: {}".format(1-cost))
-		
-		genome.fitness = 1-cost
+			image_values.append(0.1)
+			actual_label = np.argmax(softmax(substrate.activate(image_values)))
+			cost.append(1 if actual_label == correct_label else 0)
+		loss = (sum(cost)+0.0)/(len(cost)+0.0)
+		print("Fitness: {}".format(1-loss))	
+		genome.fitness = 1-loss
 
 winner_genome = pop.run_with_speciation(mnist,num_generations)
 print("Winner Genome: {0} with Fitness {1}".format(winner_genome.key, 
@@ -56,17 +60,14 @@ print("Winner Genome: {0} with Fitness {1}".format(winner_genome.key,
 
 # Convert genome into usable CPPN
 cppn = CPPN.create(winner_genome)
-# Decode CPPN into substrate
 substrate = decode(cppn,sub_input, sub_output, sub_hidden)
-
 for i in range(len(data_list)):
 	correct_label = int(data_list[i][0])
 	print("Input: {}".format(correct_label))
 	image_values = [(int(x)/255.0*0.99)+0.01 for x in data_list[i].split(',')]
 	image_values = image_values[1:]
-	image_values.append(1.0)
+	image_values.append(0.1)
 	actual_label = sigmoid(substrate.activate(image_values)[0])
 	print("Actual Output: {}".format(actual_label))
-
 draw_net(cppn, filename="images/mnist_cppn")
 draw_net(substrate, filename="images/mnist_substrate")
