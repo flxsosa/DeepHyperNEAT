@@ -3,12 +3,10 @@ Contains functions for decoding a given CPPN into a Substrate.
 
 Felix Sosa
 '''
-
 import numpy as np
 import itertools as it
 from activations import ActivationFunctionSet
 from phenomes import FeedForwardSubstrateWithBias
-
 
 def decode(cppn, sub_in_dims, sub_outputs, sheet_dims=None):
     # Decodes CPPN into a Substrate
@@ -32,27 +30,28 @@ def decode(cppn, sub_in_dims, sub_outputs, sheet_dims=None):
     else:
         sheet = sub_input_layer
     # List of connection mappings
-    connection_mappings = [cppn.nodes[x].cppn_tuple for x in cppn.output_nodes if cppn.nodes[x].cppn_tuple[0] != (1,1)]
-    # print(connection_mappings)
+    connection_mappings = [cppn.nodes[x].cppn_tuple for x in cppn.output_nodes
+                           if cppn.nodes[x].cppn_tuple[0] != (1,1)]
     # Substrate representation (dictionary of sheets)
-    hidden_sheets = {cppn.nodes[node].cppn_tuple[0] for node in cppn.output_nodes}
+    hidden_sheets = {cppn.nodes[node].cppn_tuple[0] for node in 
+                     cppn.output_nodes}
     substrate = {s:sheet for s in hidden_sheets}
     substrate[(1,0)] = sub_input_layer
     substrate[(0,0)] = sub_out_layer
     substrate[(1,1)] = [(0.0,0.0)]
-    # print("Substrate: {}".format(substrate))
     return create_phenotype_network(cppn,substrate, connection_mappings)
 
 def create_phenotype_network(cppn, substrate, conn_maps, act_func="relu"):
     # Creates a neural network using a CPPN and Substrate representation
     connections, node_evals, layers = conn_maps, [], gather_layers(substrate)
     # Assign coordinates to input and output layers
-    in_coords, out_coords = (substrate[(1,0)],(1,0)), (substrate[(0,0)],(0,0))
+    in_coords, out_coords = (substrate[(1,0)],(1,0)), (substrate[(0,0)],
+                                                       (0,0))
     bias_coords = (substrate[(1,1)],(1,1))
     in_nodes = range(len(in_coords[0]))
     bias_nodes = range(len(in_nodes), len(in_nodes+bias_coords[0]))
-    out_nodes = range(len(in_nodes+bias_nodes), len(in_nodes+bias_nodes+out_coords[0]))
-    # out_nodes = range(len(in_nodes), len(in_nodes+out_coords[0]))
+    out_nodes = range(len(in_nodes+bias_nodes), len(in_nodes+bias_nodes+
+                                                    out_coords[0]))
     # Remove the input and output layers from the substrate dictionary
     del substrate[(1,0)], substrate[(0,0)], substrate[(1,1)]
     # List of layers, first index = top layer.
@@ -63,7 +62,7 @@ def create_phenotype_network(cppn, substrate, conn_maps, act_func="relu"):
     # Get activation function for substrate
     act_func_set = ActivationFunctionSet()
     activation = act_func_set.get(act_func)
-    out_activation = act_func_set.get('linear')
+    out_activation = activation#act_func_set.get('linear')
     
     # Decode depending on whether there are hidden layers or not
     if hid_nodes:
@@ -73,17 +72,17 @@ def create_phenotype_network(cppn, substrate, conn_maps, act_func="relu"):
         # For each coordinate in output sheet
         for oc in out_coords[0]:
             im = []
-            # print("Adding Biases from Output to Hidden")
-            im += find_neurons(cppn, oc, out_coords[1], (bias_coords[0], bias_coords[1]),
-                                        bias_nodes[0], False)  
+            # Adding Biases from Output to Hidden
+            im += find_neurons(cppn,oc,out_coords[1],(bias_coords[0],
+                               bias_coords[1]),bias_nodes[0], False)  
             # For each connection mapping
             for cm in conn_maps:
                 src_sheet = cm[0]
-                im += find_neurons(cppn, oc, out_coords[1], (substrate[src_sheet], 
+                im += find_neurons(cppn,oc,out_coords[1],(substrate[src_sheet],
                                    src_sheet), hid_nodes[idx], False) 
                 idx += len(substrate[src_sheet])
-            if im:
-                node_evals.append((out_nodes[counter], out_activation, sum, 0.0, im))
+            if im: node_evals.append((out_nodes[counter], out_activation, 
+                                      sum, 0.0, im))
             hidden_idx = idx
             idx = 0
             counter += 1
@@ -100,17 +99,16 @@ def create_phenotype_network(cppn, substrate, conn_maps, act_func="relu"):
                 for hc in substrate[tgt_sheet]:
                     # For each connection mapping
                     im = []
-                    # print("Adding Biases from Hidden to Hidden")
-                    im += find_neurons(cppn, hc, tgt_sheet, (bias_coords[0], bias_coords[1]),
-                                        bias_nodes[0], False)  
+                    # Adding Biases from Hidden to Hidden
+                    im += find_neurons(cppn,hc,tgt_sheet,(bias_coords[0], 
+                                       bias_coords[1]),bias_nodes[0], False)  
                     for cm in conn_maps:
                         src_sheet = cm[0]
-                        im += find_neurons(cppn, hc, tgt_sheet, (substrate[src_sheet], 
-                                           src_sheet), hid_nodes[idx], False)     
+                        im += find_neurons(cppn,hc,tgt_sheet,(substrate[src_sheet], 
+                                           src_sheet),hid_nodes[idx],False)     
                         idx += len(substrate[src_sheet])
-                    if im:
-                        node_evals.append((hid_nodes[counter], activation, sum, 
-                                           0.0, im))
+                    if im: node_evals.append((hid_nodes[counter],activation,sum, 
+                                              0.0,im))
                     counter += 1
                     next_idx = idx
                     idx = hidden_idx
@@ -126,12 +124,11 @@ def create_phenotype_network(cppn, substrate, conn_maps, act_func="relu"):
             for hc in substrate[tgt_sheet]:
                 im = find_neurons(cppn, hc, tgt_sheet, (in_coords[0], 
                                   in_coords[1]), in_nodes[idx], False)
-                # print("Adding Biases from Hidden to Input")
-                im += find_neurons(cppn, hc, tgt_sheet, (bias_coords[0], bias_coords[1]),
-                                            bias_nodes[0], False)
-                if im:
-                    node_evals.append((hid_nodes[counter], activation, sum, 
-                                       0.0, im))
+                # Adding Biases from Hidden to Input
+                im += find_neurons(cppn,hc,tgt_sheet,(bias_coords[0], 
+                                   bias_coords[1]),bias_nodes[0], False)
+                if im: node_evals.append((hid_nodes[counter],activation, 
+                                          sum,0.0,im))
                 counter += 1
 
     else:
@@ -142,26 +139,26 @@ def create_phenotype_network(cppn, substrate, conn_maps, act_func="relu"):
             tgt_sheet = layers[0][i]
             # For each coordinate in target sheet
             for oc in out_coords[0]:
-                im = find_neurons(cppn, oc, out_coords[1], (in_coords[0], in_coords[1]), 
-                                            in_nodes[idx], False)
-                im += find_neurons(cppn, oc, out_coords[1], (bias_coords[0], bias_coords[1]),
-                                            bias_nodes[idx], False)
-                if im:
-                    node_evals.append((out_nodes[counter], out_activation, sum, 
-                                       0.0, im))
+                im = find_neurons(cppn,oc,out_coords[1],(in_coords[0], 
+                                  in_coords[1]),in_nodes[idx], False)
+                im += find_neurons(cppn,oc,out_coords[1],(bias_coords[0], 
+                                   bias_coords[1]),bias_nodes[idx], False)
+                if im: node_evals.append((out_nodes[counter], 
+                                          out_activation,sum,0.0,im))
                 counter += 1
-    return FeedForwardSubstrateWithBias(in_nodes, bias_nodes, out_nodes, node_evals)
+    return FeedForwardSubstrateWithBias(in_nodes, bias_nodes, out_nodes, 
+                                        node_evals)
 
-def find_neurons(cppn, source_coord, source_layer, target_layer, start_idx, 
-                 outgoing, max_weight=5.0):
+def find_neurons(cppn, src_coord, tgt_lyr, src_lyr, start_idx, outgoing, 
+                 max_weight=5.0):
     # Finds neurons able to be connected to current neuron
     im = []
     idx = start_idx
-    target_nodes, target_layer = target_layer[0], target_layer[1]
-    cppnon_tuple = (target_layer, source_layer)
-    # print("CPPN Tuple: {}".format(cppnon_tuple))
-    for target_coord in target_nodes:
-        w = query_cppn(source_coord, target_coord, outgoing, cppn, cppnon_tuple, max_weight)
+    tgt_nodes, src_lyr = src_lyr[0], src_lyr[1]
+    cppnon_tuple = (src_lyr, tgt_lyr)
+    for tgt_coord in tgt_nodes:
+        w = query_cppn(src_coord, tgt_coord, outgoing, cppn, cppnon_tuple,
+                       max_weight)
         if w is not 0.0: im.append((idx, w))
         idx += 1
     return im
@@ -172,19 +169,16 @@ def query_cppn(coord1, coord2, outgoing, cppn, cppnon_tuple, max_weight=5.0):
     for node_id in cppn.output_nodes:
         if(cppn.nodes[node_id].cppn_tuple == cppnon_tuple):
             idx = node_id
-    if idx == None:
-        # print("Tuple {} Does Not Exist. Return 0 for query".format(cppnon_tuple))
-        return 0.0
-    else:
-        # print("Found Tuple {} at IDX {}. {}".format(cppnon_tuple, idx, cppn.output_nodes))
-        pass
+    assert idx != None
     if outgoing:
         i = [coord1[0], coord1[1], coord2[0], coord2[1]]
     else:
         i = [coord2[0], coord2[1], coord1[0], coord1[1]]
     w = cppn.activate(i)[idx]
-    if abs(w) > 0.2:  # If abs(weight) is below threshold, treat weight as 0.0.
+    if abs(w) > 0.2 and abs(w) < max_weight:
         return w# * max_weight
+    elif abs(w) > max_weight:
+        return max_weight
     else:
         return 0.0
 
