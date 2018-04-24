@@ -9,34 +9,47 @@ sub_o_dims = 1
 
 # Make Genome
 genome = Genome(1)
-# Make CPPN
+
+# Before
+print("Before")
 cppn = CPPN.create(genome)
-# Make Substrate
 substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
-for n in genome.output_keys:
-	print("Nodes Before: {}".format(genome.nodes[n].cppn_tuple))
-# Report
-draw_net(cppn, filename="reports/bias_cppn")
-draw_net(substrate, filename="reports/bias_substrate")
-# Mutate
+print("Activation: {}\n".format(substrate.activate([1,1,1])))
+draw_net(cppn, filename="reports/bias_cppn_before")
+draw_net(substrate, filename="reports/bias_substrate_before")
+
+# Depth
 genome.mutate_increment_depth()
+print("Depth")
+cppn = CPPN.create(genome)
+substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
+print("Activation: {}\n".format(substrate.activate([1,1,1])))
+draw_net(cppn, filename="reports/bias_cppn_after_depth")
+draw_net(substrate, filename="reports/bias_substrate_after_depth")
+
+# DEpth 2
 genome.mutate_increment_depth()
-print("Depth \n")
-for n in genome.output_keys:
-	print("Nodes After: {} {}".format(genome.nodes[n].cppn_tuple, n))
-print()
+print("Depth 2")
+cppn = CPPN.create(genome)
+substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
+print("Activation: {}\n".format(substrate.activate([1,1,1])))
+draw_net(cppn, filename="reports/bias_cppn_after_depth")
+draw_net(substrate, filename="reports/bias_substrate_after_depth")
+
+# Breadth
 print("Breadth")
 genome.mutate_increment_breadth()
-for n in genome.output_keys:
-	print("Nodes After: {} {}".format(genome.nodes[n].cppn_tuple, n))
-for n in genome.connections:
-	print("Connections After: {} {}".format(genome.connections[n], n))
-# Make CPPN
 cppn = CPPN.create(genome)
-# Make Substrate
 substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
-substrate.activate([1,1,1])
+print("Activation: {}\n".format(substrate.activate([1,1,1])))
+draw_net(cppn, filename="reports/bias_cppn_after_breadth")
+draw_net(substrate, filename="reports/bias_substrate_after_breadth")
 
-# Report
-draw_net(cppn, filename="reports/bias_cppn_after")
-draw_net(substrate, filename="reports/bias_substrate_after")
+# Breadth 2
+print("Breadth 2")
+genome.mutate_increment_breadth()
+cppn = CPPN.create(genome)
+substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
+print("Activation: {}\n".format(substrate.activate([1,1,1])))
+draw_net(cppn, filename="reports/bias_cppn_after_breadth")
+draw_net(substrate, filename="reports/bias_substrate_after_breadth")
