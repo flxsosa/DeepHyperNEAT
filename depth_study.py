@@ -18,7 +18,7 @@ genome = Genome(0)
 # Genome, CPPN, and Substrate before mutation
 cppn = CPPN.create(genome)
 substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
-print("Before:",substrate.activate([1.0,2.0]))
+print("Before:",substrate.activate([1.0,2.0,1.0]))
 print(substrate.values)
 
 draw_net(cppn, filename="images/cppn_before_depth")
@@ -28,7 +28,7 @@ draw_net(substrate, filename="images/substrate_before_depth")
 genome.mutate_increment_depth()
 cppn = CPPN.create(genome)
 substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
-print("After:",substrate.activate([1.0,2.0]))
+print("After:",substrate.activate([1.0,2.0,1.0]))
 print(substrate.values)
 
 draw_net(cppn, filename="images/cppn_after_depth")
