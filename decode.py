@@ -177,8 +177,8 @@ def query_cppn(coord1, coord2, outgoing, cppn, cppnon_tuple, max_weight=5.0):
     w = cppn.activate(i)[idx]
     if abs(w) > 0.2 and abs(w) < max_weight:
         return w# * max_weight
-    elif abs(w) > max_weight:
-        return max_weight
+    # elif abs(w) > max_weight:
+    #     return max_weight
     else:
         return 0.0
 

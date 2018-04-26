@@ -447,7 +447,7 @@ class ConnectionGene():
 	def mutate(self,g,gen=None):
 		# Mutate attributes of connection gene
 		if np.random.uniform() < weight_mutation_rate:
-			chg = np.random.uniform(-5,5)
+			chg = np.random.uniform(-0.5,0.5)
 			g.ancestors.append('{}: Weight {} change from {} to {}'.format(gen,
 				self.key, self.weight, (self.weight+chg)))
 			g.update_ancestry(gen)
