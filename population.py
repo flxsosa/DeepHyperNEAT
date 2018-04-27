@@ -284,7 +284,7 @@ class Population():
 
 	def run_with_speciation(self,fitness_function, generations=None):
 		self.current_gen = 0
-		goal = 0.97
+		goal = 1.0
 		reached_goal = False
 		# Plot data
 		best_fitnesses = []
@@ -337,7 +337,7 @@ class Population():
 			avg_complexities = 0
 
 			# Reached fitness goal, we can stop
-			if self.best_genome.fitness > goal:
+			if self.best_genome.fitness >= goal:
 				print(":::")
 				print()
 				print("Tripping Fitness: {}".format(self.best_genome.fitness))

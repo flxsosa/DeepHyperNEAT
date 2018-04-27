@@ -62,7 +62,7 @@ def create_phenotype_network(cppn, substrate, conn_maps, act_func="relu"):
     # Get activation function for substrate
     act_func_set = ActivationFunctionSet()
     activation = act_func_set.get(act_func)
-    out_activation = activation#act_func_set.get('linear')
+    out_activation = act_func_set.get('linear')
     
     # Decode depending on whether there are hidden layers or not
     if hid_nodes:

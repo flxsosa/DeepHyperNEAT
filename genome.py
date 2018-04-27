@@ -18,8 +18,8 @@ conn_add_prob = 0.5
 conn_delete_prob = 0.5
 weight_mutation_rate = 0.8
 bias_mutation_rate = 0.7
-inc_depth_prob = 0.2
-inc_breadth_prob = 0.05
+inc_depth_prob = 0.0
+inc_breadth_prob = 0.0
 
 class Genome():
 
@@ -33,19 +33,19 @@ class Genome():
 		# Genome information
 		self.fitness = None
 		self.num_inputs = 4
-		self.num_outputs = 2
-		self.num_layers = 2
+		self.num_outputs = 4
+		self.num_layers = 3
 		self.input_keys = [-i - 1 for i in range(self.num_inputs)]
 		self.output_keys = range(self.num_outputs)
 		self.bias_keys = [1]
-		self.cppn_tuples = [((1,0), (0,0)), ((1,1),(0,0))]#[((1,0),(2,0)), ((2,0),(0,0))] #
+		self.cppn_tuples = [((1,0), (2,0)), ((1,1),(0,0)),((2,0),(0,0)), ((1,1),(2,0))] #
 		self.activations = ActivationFunctionSet()
 		self.ancestors = []
 		# self.prev_genomes = []
 		self.configure()
 		self._complexity = len(self.nodes) + len(self.connections)
 		self.update_ancestry("Init")
-		self.substrate = {1:[0,1],0:[0]}
+		self.substrate = {1:[0,1],0:[0],2:[0]}
 
 	def update_ancestry(self, gen):
 		self.ancestors.append("")
