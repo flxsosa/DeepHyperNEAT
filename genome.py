@@ -38,13 +38,19 @@ class Genome():
 		self.input_keys = [-i - 1 for i in range(self.num_inputs)]
 		self.output_keys = range(self.num_outputs)
 		self.bias_keys = [1]
-		self.cppn_tuples = [((1,0), (2,0)), ((1,1),(0,0)),((2,0),(0,0)), ((1,1),(2,0))] #
+		self.cppn_tuples = [((1,0), (2,0)),
+							# ((1,0),(2,1)),
+							# ((1,1),(2,1)),
+							# ((2,1),(0,0)), 
+							((1,1),(0,0)),
+							((2,0),(0,0)), 
+							((1,1),(2,0))]
 		self.activations = ActivationFunctionSet()
 		self.ancestors = []
 		# self.prev_genomes = []
 		self.configure()
 		self._complexity = len(self.nodes) + len(self.connections)
-		self.update_ancestry("Init")
+		# self.update_ancestry("Init")
 		self.substrate = {1:[0,1],0:[0],2:[0]}
 
 	def update_ancestry(self, gen):
@@ -77,7 +83,7 @@ class Genome():
 		self.output_keys = [x for x in genome.output_keys]
 		self.cppn_tuples = [x for x in genome.cppn_tuples]
 		self.num_layers = deepcopy(genome.num_layers)
-		self.ancestors = deepcopy(genome.ancestors)
+		# self.ancestors = deepcopy(genome.ancestors)
 		self.bias_keys = [x for x in genome.bias_keys]
 		self.nodes = {}
 		self.connections = {}
@@ -92,8 +98,8 @@ class Genome():
 			conn_to_add = ConnectionGene(conn_copy.key, conn_copy.weight)
 			self.connections[conn_to_add.key] = conn_to_add
 		
-		self.ancestors.append("\nCopied From Genome {} at generation {}".format(genome.key,gen))
-		self.update_ancestry(gen)
+		# self.ancestors.append("\nCopied From Genome {} at generation {}".format(genome.key,gen))
+		# self.update_ancestry(gen)
 
 	def create_connection(self, source_key, target_key, weight=None,fro=None):
 		# Create a new connection gene
@@ -176,10 +182,10 @@ class Genome():
 		i, o = conn_to_split
 		self.create_connection(i, new_node.key, 1.0)
 		self.create_connection(new_node.key, o, old_weight)
-		self.ancestors.append("{}: Mutation: Added Node {} with connections {},\
-							   {}".format(gen,new_node.key,(i, new_node.key), 
-							   (new_node.key, o)))
-		self.update_ancestry(gen)
+		# self.ancestors.append("{}: Mutation: Added Node {} with connections {},\
+							   # {}".format(gen,new_node.key,(i, new_node.key), 
+							   # (new_node.key, o)))
+		# self.update_ancestry(gen)
 
 	def mutate_add_connection(self,gen=None):
 		# Gather possible target nodes and source nodes
@@ -198,9 +204,9 @@ class Genome():
 			return
 		new_conn = self.create_connection(source_key, target_key)
 		# self.connections[new_conn.key] = new_conn
-		self.ancestors.append("{}: Mutation: Added Connection {} of weight {}\
-							  ".format(gen,new_conn.key,new_conn.weight))
-		self.update_ancestry(gen)
+		# self.ancestors.append("{}: Mutation: Added Connection {} of weight {}\
+							  # ".format(gen,new_conn.key,new_conn.weight))
+		# self.update_ancestry(gen)
 
 	def mutate_delete_node(self,gen=None):
 		# Delete a node
@@ -218,8 +224,8 @@ class Genome():
 			del self.connections[i]
 		# Delete node key
 		del self.nodes[del_key]
-		self.ancestors.append("{}: Mutation: Deleted Node {}".format(gen,del_key))
-		self.update_ancestry(gen)
+		# self.ancestors.append("{}: Mutation: Deleted Node {}".format(gen,del_key))
+		# self.update_ancestry(gen)
 		return del_key
 
 	def mutate_delete_connection(self,gen=None):
@@ -228,9 +234,9 @@ class Genome():
 			idx = np.random.choice(range(len(self.connections)))
 			key = list(self.connections.keys())[idx]
 			del self.connections[key]
-			self.ancestors.append("{}: Mutation: Deleted Connection {}\
-								  ".format(gen,key))
-			self.update_ancestry(gen)
+			# self.ancestors.append("{}: Mutation: Deleted Connection {}\
+								  # ".format(gen,key))
+			# self.update_ancestry(gen)
 	
 	def mutate_increment_depth(self,gen=None):
 		# Add CPPNON to increment depth of Substrate
@@ -307,9 +313,9 @@ class Genome():
 		# Gauss 3 to CPPNON
 		self.create_connection(gauss_3_node.key,
 							output_node.key,1.0)
-		self.ancestors.append("{}: Mutation: Added Layer {} with CPPNON {}\
-							".format(gen,cppn_tuple, output_node.key))
-		self.update_ancestry(gen)
+		# self.ancestors.append("{}: Mutation: Added Layer {} with CPPNON {}\
+							# ".format(gen,cppn_tuple, output_node.key))
+		# self.update_ancestry(gen)
 		
 	def mutate_increment_breadth(self,gen=None):
 		# Add CPPNON to increment breadth of Substrate
@@ -387,9 +393,9 @@ class Genome():
 			# Add new CPPNONs to genome
 			self.num_outputs += len(keys_to_append)
 			self.output_keys.extend(keys_to_append)
-			self.ancestors.append("{}: Mutation: Added Sheet {} with CPPNONs {}\
-							".format(gen,(layer,num_sheets), keys_to_append))
-			self.update_ancestry(gen)
+			# self.ancestors.append("{}: Mutation: Added Sheet {} with CPPNONs {}\
+							# ".format(gen,(layer,num_sheets), keys_to_append))
+			# self.update_ancestry(gen)
 	
 	def mutate_add_mapping(self,gen=None):
 		# Adds connection mapping between two sheets previously
@@ -436,9 +442,9 @@ class NodeGene():
 		# Mutate attributes of node gene
 		if np.random.uniform() < bias_mutation_rate:
 			chg = np.random.uniform(-0.5,0.5)
-			g.ancestors.append('{}: Bias {} change from {} to {}'.format(gen,
-				self.key, self.bias, (self.bias+chg)))
-			g.update_ancestry(gen)
+			# g.ancestors.append('{}: Bias {} change from {} to {}'.format(gen,
+				# self.key, self.bias, (self.bias+chg)))
+			# g.update_ancestry(gen)
 			self.bias += chg
 
 class ConnectionGene():
@@ -452,7 +458,7 @@ class ConnectionGene():
 		# Mutate attributes of connection gene
 		if np.random.uniform() < weight_mutation_rate:
 			chg = np.random.uniform(-0.5,0.5)
-			g.ancestors.append('{}: Weight {} change from {} to {}'.format(gen,
-				self.key, self.weight, (self.weight+chg)))
-			g.update_ancestry(gen)
+			# g.ancestors.append('{}: Weight {} change from {} to {}'.format(gen,
+				# self.key, self.weight, (self.weight+chg)))
+			# g.update_ancestry(gen)
 			self.weight += chg
