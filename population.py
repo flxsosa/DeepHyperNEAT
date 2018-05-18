@@ -284,7 +284,7 @@ class Population():
 
 	def run_with_speciation(self,fitness_function, generations=None):
 		self.current_gen = 0
-		goal = 1.0
+		goal = 0.8
 		reached_goal = False
 		# Plot data
 		best_fitnesses = []
