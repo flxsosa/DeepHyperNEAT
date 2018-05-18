@@ -14,8 +14,8 @@ data_list = data_file.readlines()
 data_file.close()
 # substrate parameters
 sub_input = [28,28]
-sub_hidden = [4,4]
-sub_output = 6
+sub_hidden = [28,28]
+sub_output = 3
 # Evolution and population parameters
 pop_key = 0
 pop_size = 150
@@ -52,19 +52,19 @@ def mnist(genomes):
 			correct_label = int(data_list[i][0])
 			y_ = [0]*sub_output
 			y_[correct_label] = 1
-			print("Input: {}".format(y_))
 			image_values = [(int(x)/255.0*0.99)+0.01 for x in data_list[i].split(',')]
 			image_values = image_values[1:]
 			image_values.append(0.1)
 			y = softmax(substrate.activate(image_values))
+			output_label = np.argmax(y)
+			scorecard.append(1 if output_label == correct_label else 0)
 			log_y = log_(y)
 			cross_y = cross_entropy(y_,log_y)
-			print("Actual Output: {}".format(y))
 			sum_y += cross_y
-		# print("Sum_Y: {}".format(sum_y))
+		print("Accuracy: {}".format((sum(scorecard)+0.0)/len(scorecard)))
 		loss = np.mean(sum_y)
 		print("Fitness: {}".format(loss))	
-		genome.fitness = 1.0/loss
+		genome.fitness = (sum(scorecard)+0.0)/len(scorecard)
 
 winner_genome = pop.run_with_speciation(mnist,num_generations)
 print("Winner Genome: {0} with Fitness {1}".format(winner_genome.key, 
@@ -79,7 +79,7 @@ for i in range(len(data_list)):
 	image_values = [(int(x)/255.0*0.99)+0.01 for x in data_list[i].split(',')]
 	image_values = image_values[1:]
 	image_values.append(0.1)
-	actual_label = sigmoid(substrate.activate(image_values)[0])
-	print("Actual Output: {}".format(actual_label))
+	y = softmax(substrate.activate(image_values))
+	output_label = np.argmax(y)
+	print("Actual Output: {}".format(output_label))
 draw_net(cppn, filename="images/mnist_cppn")
-draw_net(substrate, filename="images/mnist_substrate")
