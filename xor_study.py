@@ -22,7 +22,7 @@ def xor(genomes):
 		substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
 		sum_square_error = 0.0
 		for inputs, expected in zip(xor_inputs, expected_outputs):
-			inputs = inputs + (0.0,)
+			inputs = inputs + (1.0,)
 			actual_output = substrate.activate(inputs)[0]
 			sum_square_error += ((actual_output - expected)**2.0)/4.0
 		genome.fitness = 1.0 - sum_square_error

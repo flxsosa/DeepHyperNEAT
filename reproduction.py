@@ -1,16 +1,14 @@
 '''
-Class for maintaining and implementing reproductive behavior in 
-Deep HyperNEAT
+Class for maintaining and implementing reproductive behavior in Deep HyperNEAT.
 
-Felix Sosa
+Largely copied from neat-python. Copyright 2015-2017, CodeReclaimers, LLC.
 '''
 import random
 from math import ceil
 from genome import Genome
 from stagnation import Stagnation
 from itertools import count
-from math_util import mean
-from six_util import itervalues, iteritems
+from util import itervalues, iteritems, mean
 
 class Reproduction:
 

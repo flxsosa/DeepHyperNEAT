@@ -1,9 +1,8 @@
-"""
-Has the built-in activation functions,
-code for using them,
-and code for adding new user-defined ones
-"""
-from __future__ import division
+'''
+Container for activation functions.
+
+Largely copied from neat-python. Copyright 2015-2017, CodeReclaimers, LLC.
+'''
 import math
 import types
 import numpy as np
@@ -13,24 +12,27 @@ def softmax(x):
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum()
 
-def sigmoid_activation(z):
+def sigmoid_activation(x):
     '''
     Hard sigmoid function [-1, 1]
     '''
+    return 1 / (1+math.exp(-x))
     z = max(-60.0, min(60.0, 5.0 * z))
     return 1.0 / (1.0 + math.exp(-z))
 
-def tanh_activation(z):
+def tanh_activation(x):
     '''
     Hard hyperbolic tanger function [-1, 1]
     '''
+    return math.tanh(x)
     z = max(-60.0, min(60.0, 2.5 * z))
     return math.tanh(z)
 
-def sin_activation(z):
+def sin_activation(x):
     '''
     Hard sin function [-1, 1]
     '''
+    return math.sin(x)
     z = max(-60.0, min(60.0, 5.0 * z))
     return math.sin(z)
 
@@ -47,52 +49,22 @@ def gauss_activation(z):
 def dhn_gauss_activation(x):
     mu = 0
     z = abs(x)
-    return math.exp(-100.0 * (z-mu)**2)
+    return math.exp(-100.0 * (x-mu)**2)
 
 def dhn_gauss_activation_2(x):
     mu = 2
     return math.exp(-100.0 * (x-mu)**2)
 
-def relu_activation(z):
-    return z if z > 0.0 else 0.0
+def relu_activation(x):
+    return x if x > 0.0 else 0.0
 
-def softplus_activation(z):
-    z = max(-60.0, min(60.0, 5.0 * z))
-    return 0.2 * math.log(1 + math.exp(z))
+def log_activation(x):
+    z = max(1e-7, x)
+    return math.log(x)
 
-def identity_activation(z):
-    return z
-
-def clamped_activation(z):
-    return max(-1.0, min(1.0, z))
-
-def inv_activation(z):
-    try:
-        z = 1.0 / z
-    except ArithmeticError: # handle overflows
-        return 0.0
-    else:
-        return z
-
-def log_activation(z):
-    z = max(1e-7, z)
-    return math.log(z)
-
-def exp_activation(z):
-    z = max(-60.0, min(60.0, z))
-    return math.exp(z)
-
-def abs_activation(z):
-    return abs(z)
-
-def hat_activation(z):
-    return max(0.0, 1 - abs(z))
-
-def square_activation(z):
-    return z ** 2
-
-def cube_activation(z):
-    return z ** 3
+def exp_activation(x):
+    x = max(-60.0, min(60.0, z))
+    return math.exp(x)
 
 def linear_activation(x):
     return x
@@ -117,24 +89,12 @@ class ActivationFunctionSet(object):
     def __init__(self):
         self.functions = {}
         self.add('sigmoid', sigmoid_activation)
-        # self.add('tanh', tanh_activation)
         self.add('sin', sin_activation)
-        self.add('gauss', gauss_activation)
+        self.add('cos', cos_activation)
         self.add('relu', relu_activation)
-        # self.add('softplus', softplus_activation)
-        # self.add('identity', identity_activation)
-        # self.add('clamped', clamped_activation)
-        # self.add('inv', inv_activation)
-        # self.add('log', log_activation)
-        # self.add('exp', exp_activation)
-        # self.add('abs', abs_activation)
-        # self.add('hat', hat_activation)
-        # self.add('square', square_activation)
-        # self.add('cube', cube_activation)
-        self.add('dhngauss', dhn_gauss_activation)
         self.add('linear', linear_activation)
-        # self.add('tan', tan_activation)
-        # self.add('cos', cos_activation)
+        self.add('gauss', gauss_activation)
+        self.add('dhngauss', dhn_gauss_activation)
         self.add('dhngauss2', dhn_gauss_activation_2)
 
     def add(self, name, function):

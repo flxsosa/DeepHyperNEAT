@@ -1,11 +1,8 @@
 '''
-Set of functions for reporting status of an evolutionary
-run.
-
-Felix Sosa
+Set of functions for reporting status of an evolutionary run.
 '''
-from six_util import iteritems,itervalues,iterkeys
-from visualize import draw_net
+from util import iteritems,itervalues,iterkeys
+# from visualize import draw_net
 from phenomes import FeedForwardCPPN as CPPN 
 from phenomes import FeedForwardSubstrate as Substrate 
 from decode import decode
@@ -56,6 +53,10 @@ def report_fitness(pop):
 	print("Best Fitness \t Avg Fitness \t Champion")
 	print("============ \t =========== \t ========")
 	print("{:.2f} \t\t {:.2f} \t\t {}".format(pop.best_genome.fitness, avg_fitness/pop.size,pop.best_genome.key))
+	print("=================================================")
+	print("Max Complexity \t Avg Complexity")
+	print("============ \t =========== \t ========")
+	print("{} \t\t {}".format(None, pop.avg_complexity))
 	fitness_file.write("\n=================================================\n")
 	fitness_file.write("\t\tGeneration: {}\n".format(pop.current_gen))
 	fitness_file.write("=================================================\n")
@@ -63,7 +64,7 @@ def report_fitness(pop):
 	fitness_file.write("============ \t =========== \t ========\n")
 	fitness_file.write("{:.2f} \t\t {:.2f} \t\t {}\n".format(pop.best_genome.fitness, avg_fitness/pop.size,pop.best_genome.key))
 
-def report_species(species_set, generation, graphics=True):
+def report_species(species_set, generation, graphics=False):
 	print("\nSpecies Key \t Fitness Mean/Max \t Sp. Size")
 	print("=========== \t ================ \t ========")
 	fitness_file.write("\nSpecies Key \t Fitness Mean/Max \t Sp. Size\n")

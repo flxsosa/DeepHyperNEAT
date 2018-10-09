@@ -1,11 +1,10 @@
 '''
-Classes that handle speciation in Deep HyperNEAT
+Classes that handle speciation in Deep HyperNEAT.
 
-Felix Sosa 
-March 16, 2018
+Largely copied from neat-python. Copyright 2015-2017, CodeReclaimers, LLC.
 '''
 from itertools import count
-from six_util import iteritems, iterkeys, itervalues
+from util import iteritems, iterkeys, itervalues
 
 class GenomeDistanceCache:
 	# Cache of genme distances

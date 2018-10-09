@@ -1,20 +1,18 @@
 '''
-Maintains stagnation behavior for speciation in Deep HyperNEAT
+Maintains stagnation behavior for speciation in Deep HyperNEAT.
 
-Felix Sosa
-March 17, 2018
+Largely copied from neat-python. Copyright 2015-2017, CodeReclaimers, LLC.
 '''
 import sys
-from math_util import mean
-from six_util import iteritems
+from util import iteritems, mean
 
 class Stagnation:
     # Stagnation class
     def __init__(self, species_elitism=3):
         self.species_fitness_func = mean
         self.reporters = None
-        self.species_elitism = 1
-        self.max_stagnation = 10
+        self.species_elitism = 0
+        self.max_stagnation = 15
 
     def update(self, species_set, generation):
         # Updates species fitness history, checks for stagnated species,
