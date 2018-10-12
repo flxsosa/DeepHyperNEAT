@@ -55,7 +55,7 @@ This task file must contain:
 - A call to DHN to attempt to solve the task
 	```python
 	pop = Population(pop_key, pop_size, pop_elitism)
-	solution = pop.run(task,num_generations)
+	solution = pop.run(task,num_generations) # Returns the solution to the task
 	```
 
 ## Primary Modules
