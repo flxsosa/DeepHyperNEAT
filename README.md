@@ -18,10 +18,20 @@ This task file must contain:
 	* Input dimensions
 	* Output dimensions
 	* Sheet dimensions (optional)
+	```python
+	sub_in_dims = [1,2] # Is of type list
+	sub_sh_dims = [1,3] # Is of type list
+	sub_o_dims = 1 # Is of type integer
+	```
 - Evolutionary parameters
 	* Population size
 	* Population elitism
 	* Max number of generations
+	```python
+	pop_key = 0 # Key for population
+	pop_size = 150
+	pop_elitism = 2 # Number of members of pop to keep each generation
+	```
 - The task (defined as a function in python)
 	* Task parameters:
 		* Task inputs
@@ -32,6 +42,11 @@ This task file must contain:
 		expected_outputs = [2,4,6]
 		for key, genome in genomes:
 			# Iterate through genomes, apply inputs, observe outputs, etc.
+	```
+- A call to DHN to attempt to solve the task
+	```python
+	pop = Population(pop_key, pop_size, pop_elitism)
+	solution = pop.run(task,num_generations)
 	```
 
 ## Primary Modules
