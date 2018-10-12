@@ -15,7 +15,6 @@ def draw_net(net, filename=None):
     net      -- the network to be drawn
     filename -- name of image file to be rendered 
     '''
-    # print("Net: {}".format(net))
     # Dictionaries for node names and node colors
     node_names, node_colors = {}, {}
 
@@ -31,16 +30,13 @@ def draw_net(net, filename=None):
     # Set of input nodes from net
     inputs = set()
     # Traverse nodes from net and create them in dot
-    # print("Input Nodes: {}".format(net.input_nodes))
     for k in net.input_nodes:
         inputs.add(k)
         name = node_names.get(k, str(k))
-        # print("Input Node Name: {}".format(name))
         input_attrs = {'style': 'filled', 
                        'shape': 'box',
                        'fillcolor': node_colors.get(k, 'lightgray')}
         dot.node(name, _attributes=input_attrs)
-    # print("Inputs: {}".format(inputs))
     try:
       # Set of bias nodes from net
       bias = set()
@@ -58,11 +54,9 @@ def draw_net(net, filename=None):
     # Set of output nodes from net
     outputs = set()
     # Traverse nodes from net and create them in dot
-    # print("Output Nodes: {}".format(net.output_nodes))
     for k in net.output_nodes:
         outputs.add(k)
         name = node_names.get(k, str(k))
-        # print("Output Node Name: {}".format(name))
         try:
             tuple_string = str(net.output_nodes[k][0])+str(net.output_nodes[k][1])
             node_attrs = {'style': 'filled',
@@ -78,12 +72,10 @@ def draw_net(net, filename=None):
                           # 'xlabel': str(net.output_nodes[k]),
                           'fillcolor': node_colors.get(k, 'lightblue')}
         dot.node(name, _attributes=node_attrs)
-    # print("Outputs: {}".format(outputs))
     
     for node, act_func, agg_func, links in net.node_evals:
         for i, w in links:
             input, output = node, int(i)
-            # print("Node and Link: {}, {}".format(node, i))
             a = node_names.get(output, str(output))
             b = node_names.get(input, str(input))
             style = 'solid'
