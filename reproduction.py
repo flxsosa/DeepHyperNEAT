@@ -141,7 +141,7 @@ class Reproduction:
 			old_species_members = old_species_members[:reproduction_cutoff]
 
 			# Randomly choose parents and produce the number of offspring allotted to the species.
-			# Asexual reproduction for now
+			# NOTE: Asexual reproduction for now
 			while spawn > 0:
 				spawn -= 1
 				parent1_key, parent1 = random.choice(old_species_members)
