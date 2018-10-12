@@ -232,8 +232,9 @@ class Genome():
 		target_key = choice(possible_targets)
 		possible_sources = possible_targets + self.input_keys
 		source_key = choice(possible_sources)
+		# Determine if new connection creates cycles. Currently, only
+		# 	supports feed forward networks
 		if creates_cycle(self.connections, (source_key,target_key)):
-			print("Created Cylce, not adding")
 			return
 		# Ensure connection isn't duplicate
 		if (source_key,target_key) in self.connections:
