@@ -8,33 +8,17 @@ import types
 import numpy as np
 
 def softmax(x):
-    """Compute softmax values for each sets of scores in x."""
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum()
 
 def sigmoid_activation(x):
-    '''
-    Hard sigmoid function [-1, 1]
-    '''
     return 1 / (1+math.exp(-x))
-    z = max(-60.0, min(60.0, 5.0 * z))
-    return 1.0 / (1.0 + math.exp(-z))
 
 def tanh_activation(x):
-    '''
-    Hard hyperbolic tanger function [-1, 1]
-    '''
     return math.tanh(x)
-    z = max(-60.0, min(60.0, 2.5 * z))
-    return math.tanh(z)
 
 def sin_activation(x):
-    '''
-    Hard sin function [-1, 1]
-    '''
     return math.sin(x)
-    z = max(-60.0, min(60.0, 5.0 * z))
-    return math.sin(z)
 
 def tan_activation(z):
     return math.tan(z)
@@ -43,15 +27,18 @@ def cos_activation(z):
     return math.cos(z)
 
 def gauss_activation(z):
+    '''
+    Bounding input within 3.4 standard deviations.
+    '''
     z = max(-3.4, min(3.4, z))
     return math.exp(-5.0 * z**2)
 
-def dhn_gauss_activation(x):
+def sharp_gauss_activation(x):
     mu = 0
     z = abs(x)
     return math.exp(-100.0 * (x-mu)**2)
 
-def dhn_gauss_activation_2(x):
+def sharp_gauss_mu_2_activation(x):
     mu = 2
     return math.exp(-100.0 * (x-mu)**2)
 
@@ -94,8 +81,8 @@ class ActivationFunctionSet(object):
         self.add('relu', relu_activation)
         self.add('linear', linear_activation)
         self.add('gauss', gauss_activation)
-        self.add('dhngauss', dhn_gauss_activation)
-        self.add('dhngauss2', dhn_gauss_activation_2)
+        self.add('dhngauss', sharp_gauss_activation)
+        self.add('dhngauss2', sharp_gauss_mu_2_activation)
 
     def add(self, name, function):
         validate_activation(function)
