@@ -10,14 +10,21 @@ This task file must contain:
 	* Input dimensions
 	* Output dimensions
 	* Sheet dimensions (optional)
-- Task parameters
-	* Expected inputs
-	* Expected outputs (optional)
 - Evolutionary parameters
 	* Population size
 	* Population elitism
 	* Max number of generations
 - The task (defined as a function in python)
+	* Task parameters:
+		* Expected inputs
+		* Expected outputs (optional)
+	```python
+	def task(genomes):
+		inputs = [1,2,3]
+		outputs = [2,4,6]
+		for key, genome in genomes:
+			# Iterate through genomes
+	```
 
 ## Primary Modules
 These modules are associated with the primary function of the DeepHyperNEAT (DHN) algorihtm.
