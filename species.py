@@ -153,7 +153,7 @@ class SpeciesSet:
 			gid = unspeciated.pop()
 			genome = population[gid]
 			# Find the species with the most similar representative to the
-			# current genome from the unspeciated set
+			# 	current genome from the unspeciated set
 			candidate_species = []
 			# Traverse species and their representatives
 			for sid, rid in iteritems(new_representatives):
@@ -169,7 +169,7 @@ class SpeciesSet:
 				new_members[sid].append(gid)
 			else:
 				# No species is similar enough so we create a mnew species with
-				# the current genome as its representative
+				# 	the current genome as its representative
 				sid = next(self.species_indexer)
 				new_representatives[sid] = gid
 				new_members[sid] = [gid]
