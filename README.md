@@ -38,7 +38,7 @@ This task file must contain:
 		* Expected outputs (optional)
 	```python
 	def task(genomes):
-		task_inputs = [1,2,3]
+	task_inputs = [1,2,3]
 		expected_outputs = [2,4,6]
 		for key, genome in genomes:
 			cppn = CPPN.create(genome)
