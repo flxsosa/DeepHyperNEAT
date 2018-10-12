@@ -3,7 +3,7 @@
 [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
 
 ## Using DeepHyperNEAT
-In order to run DHN in its current form, you need to create a task file.
+In order to run DHN in its current form, you need to create a task file. For reference, see xor_study.py.
 
 This task file must contain:
 - Substrate parameters
