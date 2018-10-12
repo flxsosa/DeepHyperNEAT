@@ -38,17 +38,17 @@ This task file must contain:
 		* Expected outputs (optional)
 	```python
 	def task(genomes):
-	task_inputs = [1,2,3]
+		task_inputs = [1,2,3]
 		expected_outputs = [2,4,6]
 		for key, genome in genomes:
-			cppn = CPPN.create(genome)
-			substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
-			error = 0.0
+			cppn = CPPN.create(genome) # Create cppn from genome
+			substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims) # Decode cppn into substrate
+			error = 0.0 # Initialize error for current genome
 			for inputs, expected in zip(xor_inputs, expected_outputs):
-				inputs = inputs + (1.0,)
-				actual_output = substrate.activate(inputs)[0]
-				error += error_func(actual_output,expected)
-			genome.fitness = 1.0 - error
+				inputs = inputs + (1.0,) # Append inputs with bias value
+				actual_output = substrate.activate(inputs)[0] # Query substrate
+				error += error_func(actual_output,expected) # Evaluate error
+			genome.fitness = 1.0 - error # Assign fitness
 	```
 - A call to DHN to attempt to solve the task
 	```python
