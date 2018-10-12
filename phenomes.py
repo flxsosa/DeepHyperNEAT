@@ -95,7 +95,7 @@ def feed_forward_layers(inputs, outputs, connections):
     return layers
 
 class FeedForwardCPPN():
-    def __init__(self, inputs, outputs, node_evals, nodes=None, tuple_dict=None):
+    def __init__(self, inputs, outputs, node_evals, nodes=None, mapping_tuples=None):
         '''
         Feed forward representation of a CPPN.
 
@@ -103,10 +103,10 @@ class FeedForwardCPPN():
         outpusts   -- output nodes of CPPN
         node_evals -- objects containing information for each node
         nodes      -- all nodes of CPPN
-        tuple_dict -- mapping tuples associated with each output node
+        mapping_tuples -- mapping tuples associated with each output node
         '''
         self.input_nodes = inputs
-        self.output_nodes = {key:tuple_dict[key] for key in tuple_dict} if tuple_dict else outputs
+        self.output_nodes = {key:mapping_tuples[key] for key in mapping_tuples} if mapping_tuples else outputs
         self.node_evals = node_evals
         self.values = {key:0.0 for key in inputs + outputs}
         self.nodes = nodes
