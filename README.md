@@ -6,6 +6,14 @@
 In order to run DHN in its current form, you need to create a task file. For reference, see xor_study.py.
 
 This task file must contain:
+- Necessary imports:
+	```python
+	from genome import Genome # Genome class
+	from population import Population # Population class
+	from phenomes import FeedForwardCPPN # CPPN class
+	from decode import decode # Decoder for CPPN -> Substrate
+	from visualize import draw_net # optional, for visualizing networks
+	```
 - Substrate parameters
 	* Input dimensions
 	* Output dimensions
@@ -16,14 +24,14 @@ This task file must contain:
 	* Max number of generations
 - The task (defined as a function in python)
 	* Task parameters:
-		* Expected inputs
+		* Task inputs
 		* Expected outputs (optional)
 	```python
 	def task(genomes):
-		inputs = [1,2,3]
-		outputs = [2,4,6]
+		task_inputs = [1,2,3]
+		expected_outputs = [2,4,6]
 		for key, genome in genomes:
-			# Iterate through genomes
+			# Iterate through genomes, apply inputs, observe outputs, etc.
 	```
 
 ## Primary Modules
