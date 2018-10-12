@@ -41,7 +41,14 @@ This task file must contain:
 		task_inputs = [1,2,3]
 		expected_outputs = [2,4,6]
 		for key, genome in genomes:
-			# Iterate through genomes, apply inputs, observe outputs, etc.
+			cppn = CPPN.create(genome)
+			substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
+			error = 0.0
+			for inputs, expected in zip(xor_inputs, expected_outputs):
+				inputs = inputs + (1.0,)
+				actual_output = substrate.activate(inputs)[0]
+				error += error_func(actual_output,expected)
+			genome.fitness = 1.0 - error
 	```
 - A call to DHN to attempt to solve the task
 	```python
