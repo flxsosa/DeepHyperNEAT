@@ -3,11 +3,21 @@
 [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
 
 ## Using DeepHyperNEAT
-In order to run DHN in its current form, you need to create a python script detailing the task.
+In order to run DHN in its current form, you need to create a task file.
 
-The script needs to contain: substrate input and output dimensions, substrate inputs, population size, population elitism, number of generations, and a task function.
-
-Please see xor_study.py as an example. 
+This task file must contain:
+- Substrate parameters
+	* Input dimensions
+	* Output dimensions
+	* Sheet dimensions (optional)
+- Task parameters
+	* Expected inputs
+	* Expected outputs (optional)
+- Evolutionary parameters
+	* Population size
+	* Population elitism
+	* Max number of generations
+- The task (defined as a function in python)
 
 ## Primary Modules
 These modules are associated with the primary function of the DeepHyperNEAT (DHN) algorihtm.
