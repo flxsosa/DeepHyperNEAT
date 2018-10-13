@@ -1,0 +1,50 @@
+digraph svg {
+	node [fontsize=7 height=0.2 shape=circle width=0.2]
+	-1 [fillcolor=lightgray shape=box style=filled]
+	-2 [fillcolor=lightgray shape=box style=filled]
+	-3 [fillcolor=lightgray shape=box style=filled]
+	-4 [fillcolor=lightgray shape=box style=filled]
+	0 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="0
+(1, 0)(2, 0)" style=filled width=0.45]
+	1 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="1
+(1, 1)(2, 0)" style=filled width=0.45]
+	2 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="2
+(1, 1)(0, 0)" style=filled width=0.45]
+	6 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="6
+(2, 0)(0, 0)" style=filled width=0.45]
+	7 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="7
+(1, 1)(2, 1)" style=filled width=0.45]
+	8 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="8
+(1, 0)(2, 1)" style=filled width=0.45]
+	9 [fillcolor=lightblue fixedsize=true fontsize=7 height=0.45 label="9
+(2, 1)(0, 0)" style=filled width=0.45]
+	-2 -> 1 [color=green penwidth=0.114450039936 style=solid]
+	-1 -> 1 [color=red penwidth=0.161841432317 style=solid]
+	-3 -> 1 [color=green penwidth=0.129647945037 style=solid]
+	-4 -> 1 [color=green penwidth=0.204006386051 style=solid]
+	-2 -> 10 [color=green penwidth=0.293054178962 style=solid]
+	-3 -> 3 [color=green penwidth=0.269492280987 style=solid]
+	-1 -> 3 [color=red penwidth=0.334894736834 style=solid]
+	-4 -> 4 [color=green penwidth=0.284542406643 style=solid]
+	-2 -> 4 [color=red penwidth=0.230028064472 style=solid]
+	-3 -> 7 [color=green penwidth=0.121186478924 style=solid]
+	-1 -> 7 [color=red penwidth=0.145681787903 style=solid]
+	-4 -> 7 [color=green penwidth=0.223969065094 style=solid]
+	-2 -> 7 [color=red penwidth=0.120297843604 style=solid]
+	-4 -> 2 [color=red penwidth=0.102027621195 style=solid]
+	-3 -> 2 [color=green penwidth=0.138235062648 style=solid]
+	-1 -> 2 [color=red penwidth=0.13080537048 style=solid]
+	10 -> 2 [color=green penwidth=0.101296084784 style=solid]
+	4 -> 5 [color=green penwidth=0.314641588503 style=solid]
+	3 -> 5 [color=green penwidth=0.303848563223 style=solid]
+	-1 -> 0 [color=green penwidth=0.132167292563 style=solid]
+	5 -> 0 [color=red penwidth=0.166632352474 style=solid]
+	-4 -> 0 [color=red penwidth=0.146849216899 style=solid]
+	-3 -> 0 [color=red penwidth=0.27013472846 style=solid]
+	5 -> 9 [color=green penwidth=0.236591999155 style=solid]
+	5 -> 6 [color=green penwidth=0.213699707035 style=solid]
+	-3 -> 8 [color=red penwidth=0.219088804731 style=solid]
+	-1 -> 8 [color=red penwidth=0.134807948108 style=solid]
+	5 -> 8 [color=red penwidth=0.184858435071 style=solid]
+	-2 -> 8 [color=red penwidth=0.234035684974 style=solid]
+}
