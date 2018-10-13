@@ -15,8 +15,13 @@ class Stagnation:
         self.max_stagnation = 15
 
     def update(self, species_set, generation):
-        # Updates species fitness history, checks for stagnated species,
-        # and returns a list with stagnant species to remove
+        '''
+        Updates species fitness history, checks for stagnated species,
+        and returns a list with stagnant species to remove.
+
+        species_set -- set containing the species and their ids
+        generation  -- the current generation number
+        '''
         species_data = []
         for sid, species in iteritems(species_set.species):
             if species.fitness_history:
@@ -36,7 +41,7 @@ class Stagnation:
         num_non_stagnant_species = len(species_data)
         for idx, (sid, species) in enumerate(species_data):
             # Override stagnant state if marking this species as stagnant would
-            # result in the total number of species dropping below the limit
+            #   result in the total number of species dropping below the limit
             stagnant_time = generation - species.last_improved
             is_stagnant = False
             if num_non_stagnant_species > self.species_elitism:

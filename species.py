@@ -7,7 +7,7 @@ from itertools import count
 from util import iteritems, iterkeys, itervalues
 
 class GenomeDistanceCache:
-	# Cache of genme distances
+	# Cache of genome distances
 	def __init__(self):
 		self.distances = {}
 		self.hits = 0
@@ -30,6 +30,9 @@ class GenomeDistanceCache:
 		return distance
 
 	def genome_distance(self, genome0, genome1):
+		'''
+		Computes genome distance between two genomes
+		'''
 		node_distance = 0.0
 		# Determine node distance
 		if genome0.nodes or genome1.nodes:
@@ -81,14 +84,18 @@ class GenomeDistanceCache:
 		return distance
 
 	def node_gene_distance(self, node_gene_0, node_gene_1):
-		# Computes genetic distance between node genes
+		'''
+		Computes genetic distance between node genes
+		'''
 		distance = abs(node_gene_0.bias-node_gene_1.bias)
 		if node_gene_0.activation != node_gene_1.activation:
 			distance += 1.0
 		return distance * self.compatibility_weight_coefficient
 
 	def connection_gene_distance(self, conn_gene_0, conn_gene_1):
-		# Computes genetic distance between connection genes
+		'''
+		Computes genetic distance between connection genes
+		'''
 		d = abs(conn_gene_0.weight - conn_gene_1.weight)
 		return d * self.compatibility_weight_coefficient
 
@@ -121,6 +128,9 @@ class SpeciesSet:
 		self.genome_to_species = {}
 
 	def speciate(self,population,generation):
+		'''
+		Speciates a population.
+		'''
 		# Compatibility threshold
 		compatibility_threshold = self.threshold
 		# Set of unspeciated members of the population

@@ -1,7 +1,7 @@
 '''
 Contains classes for CPPN and Substrate phenomes.
 
-Felix Sosa
+Largely copied from neat-python. Copyright 2015-2017, CodeReclaimers, LLC.
 '''
 
 from util import itervalues
@@ -41,7 +41,6 @@ def required_for_output(inputs, outputs, connections):
 
     Returns a set of identifiers of required nodes.
     """
-
     required = set(outputs)
     s = set(outputs)
     while 1:

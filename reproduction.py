@@ -22,6 +22,11 @@ class Reproduction:
 		self.species_reproduction_threshold = 0.2
 
 	def create_new_population(self, num_genomes):
+		'''
+		Creates a fresh population
+
+		num_genomes -- number of genomes to create for the population
+		'''
 		new_genomes = {}
 		# Create n new, minimal genomes
 		for i in range(num_genomes):
@@ -34,7 +39,14 @@ class Reproduction:
 
 	@staticmethod
 	def compute_species_sizes(adjusted_fitness, previous_sizes, pop_size, min_species_size):
-		"""Compute the proper number of offspring per species (proportional to fitness)."""
+		'''
+		Compute the proper number of offspring per species (proportional to fitness).
+
+		adjusted_fitness -- normalized fitness of members in the population
+		previous_sizes   -- previous sizes of the species
+		pop_size 		 -- population size
+		min_species_size -- minimum species size
+		'''
 		
 		adujst_fitness_sum = sum(adjusted_fitness)
 		species_sizes = []
@@ -69,7 +81,13 @@ class Reproduction:
 		return species_sizes
 
 	def reproduce_with_species(self, species_set, pop_size, generation):
-		# Creates and speciates genomes
+		'''
+		Creates and speciates genomes.
+
+		species_set -- set of current species
+		pop_size    -- population size
+		generation  -- current generation
+		'''
 		all_fitnesses = []
 		remaining_species = []
 		# Traverse species and grab fitnesses from non-stagnated species
