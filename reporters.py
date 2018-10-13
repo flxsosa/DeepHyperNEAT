@@ -81,11 +81,3 @@ def plot_fitness(x,y):
 	plt.xlabel("Generation")
 	plt.tight_layout()
 	plt.savefig("reports/fitness_plot.png")
-
-def plot_complexity(x1,y1,y2,y3):
-	plt.plot(x1,y1,x1,y2,x1,y3)
-	plt.ylabel("Complexity")
-	plt.xlabel("Generation")
-	plt.legend(['?','max_comp', 'min_comp', 'avg_comp'])
-	plt.tight_layout()
-	plt.savefig("reports/complexity_plot.png")

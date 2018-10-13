@@ -112,7 +112,4 @@ class Population():
 		
 		generations = range(self.current_gen)
 		plot_fitness(generations, best_fitnesses)
-		plot_complexity(generations, max_complexity, 
-						min_complexity,
-						avg_complexity)
 		return self.best_genome
