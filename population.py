@@ -13,6 +13,13 @@ from reporters import report_fitness, report_species, plot_fitness, plot_complex
 class Population():
 
 	def __init__(self, key, size, elitism=1, state=None):
+		'''
+		Class for populations. 
+
+		key		-- population key
+		size 	-- population size
+		elitism -- number of members that must be passed from previous gen to next gen
+		'''
 		self.key = key
 		self.size = size
 		self.best_genome = None

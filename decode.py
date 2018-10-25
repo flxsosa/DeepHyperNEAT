@@ -1,6 +1,9 @@
 '''
 Contains functions for decoding a given CPPN into a Substrate.
 
+create_substrate() and query_cppn() are based on corresponding 
+functions from PurePLES (but are heavily modified for DeepHyperNEAT).
+
 Felix Sosa
 '''
 import numpy as np
@@ -56,6 +59,8 @@ def decode(cppn, input_dimensions, output_dimensions, sheet_dimensions=None):
 def create_substrate(cppn, substrate, mapping_tuples, id_dict, act_func="relu"):
     '''
     Creates a neural network from a CPPN and substrate representation.
+
+    Based on PurePLES. Copyright (c) 2017 Adrian Westh & Simon Krabbe Munck.
 
     cppn      -- CPPN
     substrate -- substrate representation (a dictionary of sheets and their respective coordinate maps)
@@ -171,6 +176,8 @@ def query_cppn(cppn, source_coordinate, source_layer, target_layer, node_idx, id
     '''
     Given a single node's coordinates and a layer of nodes, query the CPPN for potential weights
     for all possible connections between the layer and the single node.
+
+    Based on PurePLES. Copyright (c) 2017 Adrian Westh & Simon Krabbe Munck.
 
     cppn         -- CPPN
     source_coordinate -- coordinate of single node to be connected to a set of nodes

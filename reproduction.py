@@ -1,7 +1,7 @@
 '''
 Class for maintaining and implementing reproductive behavior in Deep HyperNEAT.
 
-Largely copied from neat-python. Copyright 2015-2017, CodeReclaimers, LLC.
+Largely copied from neat-python. (Copyright 2015-2017, CodeReclaimers, LLC.)
 '''
 import random
 from math import ceil

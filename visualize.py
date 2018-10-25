@@ -1,7 +1,7 @@
 '''
 Functions for drawing substrates and CPPNs using graphviz.
 
-Largely copied from neat-python. Copyright 2015-2017, CodeReclaimers, LLC.
+Largely copied from neat-python. (Copyright 2015-2017, CodeReclaimers, LLC.)
 '''
 
 import graphviz 

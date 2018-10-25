@@ -1,7 +1,8 @@
 '''
 Class for the DeepHyperNEAT genome and genes.
 
-Felix Sosa
+Largely copied from neat-python. (Copyright 2015-2017, CodeReclaimers, LLC.),
+though heavily modified for DeepHyperNEAT.
 '''
 import numpy as np
 from itertools import count
@@ -310,13 +311,13 @@ class Genome():
 											   source_sheet))
 		# Create two new gaussian nodes
 		gauss_1_node = self.create_node()
-		gauss_1_node.activation = self.activations.get('dhngauss')
+		gauss_1_node.activation = self.activations.get('sharp_gauss')
 		gauss_1_node.bias = 0.0
 		gauss_2_node = self.create_node()
-		gauss_2_node.activation = self.activations.get('dhngauss')
+		gauss_2_node.activation = self.activations.get('sharp_gauss')
 		gauss_2_node.bias = 0.0
 		gauss_3_node = self.create_node()
-		gauss_3_node.activation = self.activations.get('dhngauss2')
+		gauss_3_node.activation = self.activations.get('sharp_gauss2')
 		gauss_3_node.bias = 0.0
 		# Create new CPPN Output Node (CPPNON)
 		output_node = self.create_node('out', cppn_tuple)
@@ -439,15 +440,16 @@ class Genome():
 
 		gen -- optional argument for current generation mutation occurs
 		'''
-		# not connected
-		layer_1 = 1#randint(1,self.num_layers-1)
-		layer_2 = 0#randint(0,self.num_layers-1)
+		layer_1 = randint(1,self.num_layers-1)
+		layer_2 = randint(0,self.num_layers-1)
+		# NOTE: No recurrent connections at the moment
+		if layer_1 == layer_2: return
 		num_sheets_1 = len([x for x in self.output_keys if 
 							self.nodes[x].cppn_tuple[0][0] == layer_1])
 		num_sheets_2 = len([x for x in self.output_keys if 
 							self.nodes[x].cppn_tuple[0][0] == layer_2])
-		sheet_1 = 0#randint(0,num_sheets_1-1)
-		sheet_2 = 0 #if layer_2 == 0 else randint(0,num_sheets_2-1)
+		sheet_1 = randint(0,num_sheets_1-1)
+		sheet_2 = 0 if layer_2 == 0 else randint(0,num_sheets_2-1)
 
 		source_sheet = (layer_1, sheet_1)
 		target_sheet = (layer_2, sheet_2)
@@ -455,8 +457,6 @@ class Genome():
 		cppn_tuple = (source_sheet, target_sheet)
 		output_node = self.create_node('out', cppn_tuple)
 		self.output_keys.append(output_node.key)
-		print("Added node {} with tuple {}".format(output_node.key, 
-												   output_node.cppn_tuple))
 		for input_id in self.input_keys:
 			self.create_connection(input_id, output_node.key)
 

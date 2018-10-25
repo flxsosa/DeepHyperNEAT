@@ -1,7 +1,7 @@
 '''
 Container for activation functions.
 
-Largely copied from neat-python. Copyright 2015-2017, CodeReclaimers, LLC.
+Largely copied from neat-python. (Copyright 2015-2017, CodeReclaimers, LLC.)
 '''
 import math
 import types
@@ -81,8 +81,8 @@ class ActivationFunctionSet(object):
         self.add('relu', relu_activation)
         self.add('linear', linear_activation)
         self.add('gauss', gauss_activation)
-        self.add('dhngauss', sharp_gauss_activation)
-        self.add('dhngauss2', sharp_gauss_mu_2_activation)
+        self.add('sharp_gauss', sharp_gauss_activation)
+        self.add('sharp_gauss2', sharp_gauss_mu_2_activation)
 
     def add(self, name, function):
         validate_activation(function)
@@ -93,6 +93,3 @@ class ActivationFunctionSet(object):
         if f is None:
             raise InvalidActivationFunction("No such activation function: {0!r}".format(name))
         return f
-
-    def is_valid(self, name):
-        return name in self.functions

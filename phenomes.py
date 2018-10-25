@@ -1,7 +1,7 @@
 '''
 Contains classes for CPPN and Substrate phenomes.
 
-Largely copied from neat-python. Copyright 2015-2017, CodeReclaimers, LLC.
+Largely copied from neat-python. (Copyright 2015-2017, CodeReclaimers, LLC.)
 '''
 
 from util import itervalues

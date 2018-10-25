@@ -1,8 +1,7 @@
 '''
 Set of functions for reporting status of an evolutionary run.
 
-NOTE: Only meant for XOR at the moment. Working on generalizing the framework
-	  to any task.
+NOTE: Only meant for XOR at the moment. Working on generalizing to any task.
 '''
 from util import iteritems,itervalues,iterkeys
 from phenomes import FeedForwardCPPN as CPPN 
