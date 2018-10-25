@@ -52,8 +52,7 @@ for _ in range(100):
 	champ_fitness.append((champion.num_depth, champion.num_breadth))
 	pop_gens.append(pop.current_gen)
 	# Print to user
-	print("\nChampion Genome: {} with Fitness {}\n".format(champion.key, 
-		  											champion.fitness))
+	print("\nChampion Genome: {} with Fitness {}\n".format(champion.key, champion.fitness))
 
 num_depth, num_breadth = 0,0
 for x in champ_fitness:
