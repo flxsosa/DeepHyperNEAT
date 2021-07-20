@@ -6,11 +6,11 @@ though heavily modified for DeepHyperNEAT.
 '''
 import numpy as np
 from itertools import count
-from util import iteritems,itervalues,iterkeys
+from deep_hyperneat.util import iteritems,itervalues,iterkeys
 from random import choice, randint
-from activations import ActivationFunctionSet
+from deep_hyperneat.activations import ActivationFunctionSet
 from copy import deepcopy
-from phenomes import creates_cycle
+from deep_hyperneat.phenomes import creates_cycle
 
 # Mutation probabilities
 node_add_prob = 0.2
@@ -45,7 +45,7 @@ class Genome():
 		self.bias_keys = [1]
 		# (0,0) is designated as the output layer. (1,1) is designated
 		#	as the bias sheet. Input sheet is designated as (1,0). Hidden
-		#	layers range from (2,k) to (n,k). Where n is the layer number 
+		#	layers range from (2,k) to (n,k). Where n is the layer number
 		#	and k is the sheet number. Note again that 1 and 0 are reserved
 		#	for input and output layers, respectively.
 		self.cppn_tuples = [((1,0), (0,0)),((1,1),(0,0))]
@@ -73,7 +73,7 @@ class Genome():
 				self.create_connection(input_id, output_id)
 		for key, cppn_tuple in zip(self.output_keys,self.cppn_tuples):
 			self.create_node('out',cppn_tuple,key)
-	
+
 	def copy(self, genome, gen):
 		'''
 		Copies the genes of another genome
@@ -104,7 +104,7 @@ class Genome():
 		for conn_copy in genome.connections.values():
 			conn_to_add = ConnectionGene(conn_copy.key, conn_copy.weight)
 			self.connections[conn_to_add.key] = conn_to_add
-		
+
 	def create_connection(self, source_key, target_key, weight=None):
 		'''
 		Creates a new connection gene in the genome.
@@ -129,7 +129,7 @@ class Genome():
 		mapping_tuple -- mapping tuple for output nodes
 		'''
 		if node_type == 'hidden':
-			activation_key = np.random.choice(self.activations.functions.keys())
+			activation_key = np.random.choice(list(self.activations.functions.keys()))
 		else:
 			activation_key = 'linear'
 		activation = self.activations.get(activation_key)
@@ -143,7 +143,7 @@ class Genome():
 		Randomly choose a mutation to execute on the genome.
 
 		gen 		  -- optional argument for generation mutation occurs
-		single_struct -- optional flag for only allowing one topological 
+		single_struct -- optional flag for only allowing one topological
 						 mutation to occur per generation
 		'''
 		if single_struct:
@@ -268,7 +268,7 @@ class Genome():
 			idx = np.random.choice(range(len(self.connections)))
 			key = list(self.connections.keys())[idx]
 			del self.connections[key]
-	
+
 	def mutate_increment_depth(self,gen=None):
 		'''
 		Mutation for adding an output node gene to the genome allowing
@@ -296,17 +296,17 @@ class Genome():
 				# Add connections
 				for conn in list(self.connections):
 					if conn[1] == bias_key:
-						n=self.create_connection(conn[0], 
+						n=self.create_connection(conn[0],
 												 new_bias_output_node.key,
-												 0) 
+												 0)
 				self.output_keys.append(new_bias_output_node.key)
 		self.bias_keys.append(b_key)
-		
+
 		# Adjust tuples for previous CPPNONs
 		for key in self.output_keys:
 			tup = self.nodes[key].cppn_tuple
 			if tup[1] == (0,0) and key != b_key:
-				self.nodes[key].cppn_tuple = (tup[0], 
+				self.nodes[key].cppn_tuple = (tup[0],
 											  (source_layer,
 											   source_sheet))
 		# Create two new gaussian nodes
@@ -329,31 +329,31 @@ class Genome():
 		self.output_keys.append(output_node.key)
 		# Add connections
 		# x1 to gauss 1
-		self.create_connection(self.input_keys[0], 
+		self.create_connection(self.input_keys[0],
 							gauss_1_node.key, -1.0)
 		# x2 to gauss 1
-		self.create_connection(self.input_keys[2], 
+		self.create_connection(self.input_keys[2],
 							gauss_1_node.key, 1.0)
 		# y1 to gauss 2
-		self.create_connection(self.input_keys[1], 
+		self.create_connection(self.input_keys[1],
 							gauss_2_node.key, -1.0)
 		# y2 to gauss 2
-		self.create_connection (self.input_keys[3], 
-							gauss_2_node.key, 1.0) 
+		self.create_connection (self.input_keys[3],
+							gauss_2_node.key, 1.0)
 		# Gauss 1 to gauss 3
-		self.create_connection(gauss_1_node.key, 
+		self.create_connection(gauss_1_node.key,
 							gauss_3_node.key, 1.0)
 		# Gauss 2 to gauss 3
-		self.create_connection(gauss_2_node.key, 
+		self.create_connection(gauss_2_node.key,
 							gauss_3_node.key, 1.0)
 		# Gauss 3 to CPPNON
 		self.create_connection(gauss_3_node.key,
 							output_node.key,1.0)
-		
+
 	def mutate_increment_breadth(self,gen=None):
 		'''
 		Mutation for adding an output node gene to the genome allowing
-		it to represent a new sheet to a preexisting layer in the encoded 
+		it to represent a new sheet to a preexisting layer in the encoded
 		Substrate.
 
 		gen -- optional argument for current generation mutation occurs
@@ -377,7 +377,7 @@ class Genome():
 				if self.nodes[bias_key].cppn_tuple == ((1,1), copied_sheet):
 					# print("Found")
 					# Create new bias output node in CPPN
-					new_bias_output_node = self.create_node('out', ((1,1), 
+					new_bias_output_node = self.create_node('out', ((1,1),
 														   (layer,num_sheets)))
 					# Copy over activation
 					new_bias_output_node.activation = deepcopy(self.nodes[bias_key].activation)
@@ -389,7 +389,7 @@ class Genome():
 					# Add connections
 					for conn in list(self.connections):
 						if conn[1] == bias_key:
-							self.create_connection(conn[0], 
+							self.create_connection(conn[0],
 												   new_bias_output_node.key,
 												   self.connections[conn].weight/2.0)
 							self.connections[conn].weight /= 2.0
@@ -397,7 +397,7 @@ class Genome():
 			# Search for CPPNONs that contain the copied sheet
 			for key in self.output_keys:
 				# Create CPPNONs to represent outgoing connections
-				if (self.nodes[key].cppn_tuple[0] == copied_sheet and key 
+				if (self.nodes[key].cppn_tuple[0] == copied_sheet and key
 					not in self.bias_keys):
 					# create new cppn node for newly copied sheet
 					cppn_tuple = ((layer,num_sheets),
@@ -410,11 +410,11 @@ class Genome():
 					for conn in list(self.connections):
 						if conn[1] == key:
 							self.connections[conn].weight /= 2.0
-							self.create_connection(conn[0], output_node.key, 
+							self.create_connection(conn[0], output_node.key,
 												self.connections[conn].weight)
 
 				# Create CPPNONs to represent the incoming connections
-				if (self.nodes[key].cppn_tuple[1] == copied_sheet and key 
+				if (self.nodes[key].cppn_tuple[1] == copied_sheet and key
 					not in self.bias_keys):
 					# create new cppn node for newly copied sheet
 					cppn_tuple = (self.nodes[key].cppn_tuple[0],
@@ -426,12 +426,12 @@ class Genome():
 					# Create connections in CPPN
 					for conn in list(self.connections):
 						if conn[1] == key:
-							self.create_connection(conn[0], output_node.key, 
-													self.connections[conn].weight)      
+							self.create_connection(conn[0], output_node.key,
+													self.connections[conn].weight)
 			# Add new CPPNONs to genome
 			self.num_outputs += len(keys_to_append)
 			self.output_keys.extend(keys_to_append)
-	
+
 	def mutate_add_mapping(self,gen=None):
 		'''
 		Mutation for adding an output node gene to the genome allowing
@@ -444,9 +444,9 @@ class Genome():
 		layer_2 = randint(0,self.num_layers-1)
 		# NOTE: No recurrent connections at the moment
 		if layer_1 == layer_2: return
-		num_sheets_1 = len([x for x in self.output_keys if 
+		num_sheets_1 = len([x for x in self.output_keys if
 							self.nodes[x].cppn_tuple[0][0] == layer_1])
-		num_sheets_2 = len([x for x in self.output_keys if 
+		num_sheets_2 = len([x for x in self.output_keys if
 							self.nodes[x].cppn_tuple[0][0] == layer_2])
 		sheet_1 = randint(0,num_sheets_1-1)
 		sheet_2 = 0 if layer_2 == 0 else randint(0,num_sheets_2-1)
@@ -493,7 +493,7 @@ class NodeGene():
 		pass
 
 class ConnectionGene():
-	
+
 	def __init__(self,key,weight):
 		'''
 		Base class for CPPN connection genes.

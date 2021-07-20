@@ -5,10 +5,10 @@ Largely copied from neat-python. (Copyright 2015-2017, CodeReclaimers, LLC.)
 '''
 import random
 from math import ceil
-from genome import Genome
-from stagnation import Stagnation
+from deep_hyperneat.genome import Genome
+from deep_hyperneat.stagnation import Stagnation
 from itertools import count
-from util import itervalues, iteritems, mean
+from deep_hyperneat.util import itervalues, iteritems, mean
 
 class Reproduction:
 
@@ -47,7 +47,7 @@ class Reproduction:
 		pop_size 		 -- population size
 		min_species_size -- minimum species size
 		'''
-		
+
 		adujst_fitness_sum = sum(adjusted_fitness)
 		species_sizes = []
 		for adjusted_fit, prev_size in zip(adjusted_fitness, previous_sizes):
@@ -56,7 +56,7 @@ class Reproduction:
 				species_size = max(min_species_size, adjusted_fit/adujst_fitness_sum*pop_size)
 			else:
 				species_size = min_species_size
-			# This is basically determining if the species improved in fitness or 
+			# This is basically determining if the species improved in fitness or
 			# decreased
 			difference = (species_size-prev_size)*0.5
 			count = int(round(difference))
@@ -91,7 +91,7 @@ class Reproduction:
 		all_fitnesses = []
 		remaining_species = []
 		# Traverse species and grab fitnesses from non-stagnated species
-		for sid, species, species_is_stagnant in self.stagnation.update(species_set, 
+		for sid, species, species_is_stagnant in self.stagnation.update(species_set,
 																		generation):
 			if species_is_stagnant:
 				print("!!! Species {} Stagnated !!!".format(sid))
@@ -99,7 +99,7 @@ class Reproduction:
 				pass
 			else:
 				# Add fitnesses of members of current species
-				all_fitnesses.extend(member.fitness for member in 
+				all_fitnesses.extend(member.fitness for member in
 									 itervalues(species.members))
 				remaining_species.append(species)
 		# No species
@@ -114,9 +114,9 @@ class Reproduction:
 		# Compute adjusted fitness and record minimum species size
 		for species in remaining_species:
 			# Determine current species average fitness
-			mean_species_fitness = mean([member.fitness for member in 
+			mean_species_fitness = mean([member.fitness for member in
 										itervalues(species.members)])
-			max_species_fitness = max([member.fitness for member in 
+			max_species_fitness = max([member.fitness for member in
 										itervalues(species.members)])
 			# Determine current species adjusted fitness and update it
 			species_adjusted_fitness = (mean_species_fitness-

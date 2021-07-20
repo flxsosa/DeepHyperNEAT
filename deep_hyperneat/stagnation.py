@@ -4,7 +4,7 @@ Maintains stagnation behavior for speciation in Deep HyperNEAT.
 Largely copied from neat-python (Copyright 2015-2017, CodeReclaimers, LLC.)
 '''
 import sys
-from util import iteritems, mean
+from deep_hyperneat.util import iteritems, mean
 
 class Stagnation:
     # Stagnation class

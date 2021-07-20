@@ -1,15 +1,15 @@
 '''
 Contains functions for decoding a given CPPN into a Substrate.
 
-create_substrate() and query_cppn() are based on corresponding 
+create_substrate() and query_cppn() are based on corresponding
 functions from PurePLES (but are heavily modified for DeepHyperNEAT).
 
 Felix Sosa
 '''
 import numpy as np
 import itertools as it
-from activations import ActivationFunctionSet
-from phenomes import FeedForwardSubstrate
+from deep_hyperneat.activations import ActivationFunctionSet
+from deep_hyperneat.phenomes import FeedForwardSubstrate
 import time
 
 def decode(cppn, input_dimensions, output_dimensions, sheet_dimensions=None):
@@ -21,17 +21,17 @@ def decode(cppn, input_dimensions, output_dimensions, sheet_dimensions=None):
     output_dimension -- dimensions of substrate output layer
     sheet_dimensions -- optional substrate sheet dimensions
     '''
-   
+
     # Create input layer coordinate map from specified input dimensions
     x = np.linspace(-1.0, 1.0, input_dimensions[1]) if (input_dimensions[1] > 1) else [0.0]
     y = np.linspace(-1.0, 1.0, input_dimensions[0]) if (input_dimensions[0] > 1) else [0.0]
     input_layer = list(it.product(x,y))
-   
+
     # Create output layer coordinate map from specified output dimensions
     x = np.linspace(-1.0,1.0,output_dimensions) if (output_dimensions > 1) else [0.0]
     y = [0.0]
     output_layer = list(it.product(x,y))
-   
+
     # Create sheet coordinate map from given sheet dimensions (if any)
     if sheet_dimensions:
         x = np.linspace(-1.0, 1.0, sheet_dimensions[1]) if (sheet_dimensions[1] > 1) else [0.0]
@@ -39,20 +39,20 @@ def decode(cppn, input_dimensions, output_dimensions, sheet_dimensions=None):
         sheet = list(it.product(x,y))
     else:
         sheet = input_layer
-    
+
     # Create list of mappings to be created between substrate sheets
     connection_mappings = [cppn.nodes[x].cppn_tuple for x in cppn.output_nodes if cppn.nodes[x].cppn_tuple[0] != (1,1)]
-    
+
     # Create substrate representation (dictionary of sheets and their respective coordinate maps)
     hidden_sheets = {cppn.nodes[node].cppn_tuple[0] for node in cppn.output_nodes}
     substrate = {s:sheet for s in hidden_sheets}
     substrate[(1,0)] = input_layer
     substrate[(0,0)] = output_layer
     substrate[(1,1)] = [(0.0,0.0)]
-   
+
     # Create dictionary of output node IDs to their respective mapping tuples
     cppn_idx_dict = {cppn.nodes[idx].cppn_tuple:idx for idx in cppn.output_nodes}
-  
+
     # Create the substrate
     return create_substrate(cppn, substrate, connection_mappings, cppn_idx_dict)
 
@@ -69,26 +69,26 @@ def create_substrate(cppn, substrate, mapping_tuples, id_dict, act_func="relu"):
     act_func  -- optional argument for the activation function of the substrate
     '''
     node_evals, layers = [], gather_layers(substrate)
-    
+
     # Assign coordinates to input, output, and bias layers
     input_coordinates, output_coordinates, bias_coordinates = (substrate[(1,0)],(1,0)), (substrate[(0,0)],(0,0)), (substrate[(1,1)],(1,1))
-    
+
     # Assign ids to nodes in the substrate
-    input_node_ids = range(len(input_coordinates[0]))
-    bias_node_ids = range(len(input_node_ids), len(input_node_ids+bias_coordinates[0]))
-    output_node_ids = range(len(input_node_ids+bias_node_ids), len(input_node_ids+bias_node_ids+output_coordinates[0]))
+    input_node_ids = list(range(len(input_coordinates[0])))
+    bias_node_ids = list(range(len(input_node_ids), len(input_node_ids+bias_coordinates[0])))
+    output_node_ids = list(range(len(input_node_ids+bias_node_ids), len(input_node_ids+bias_node_ids+output_coordinates[0])))
 
     # Remove the input and output layers from the substrate dictionary
     del substrate[(1,0)], substrate[(0,0)], substrate[(1,1)]
-    
+
     # Create hidden layer coordinate maps
-    hidden_coordinates = [(substrate[k], k) for k in substrate.keys()] 
+    hidden_coordinates = [(substrate[k], k) for k in substrate.keys()]
 
     # Assign ids to nodes in all hidden layers
     number_of_hidden_nodes = sum([len(layer[0]) for layer in hidden_coordinates])
     start_index = len(input_node_ids+output_node_ids+bias_node_ids)
-    hidden_node_ids = range(start_index, start_index+number_of_hidden_nodes)
-    
+    hidden_node_ids = list(range(start_index, start_index+number_of_hidden_nodes))
+
     # Get activation function for substrate
     act_func_set = ActivationFunctionSet()
     hidden_activation = act_func_set.get(act_func)
@@ -96,25 +96,25 @@ def create_substrate(cppn, substrate, mapping_tuples, id_dict, act_func="relu"):
 
     # Decode depending on whether there are hidden layers or not
     if hidden_node_ids:
-        
+
         # Query CPPN for mapping between output layer and topmost hidden layer
         out_hid_mapping_tuples = [mapping for mapping in mapping_tuples if mapping[1] == (0,0)]
         out_node_counter, idx, hidden_idx = 0, 0, 0
         # For each coordinate in output sheet
         for oc in output_coordinates[0]:
             # Adding Biases from Output to Hidden
-            node_connections = query_cppn(cppn,oc,output_coordinates,bias_coordinates,bias_node_ids[0], id_dict)  
+            node_connections = query_cppn(cppn,oc,output_coordinates,bias_coordinates,bias_node_ids[0], id_dict)
             # For each connection mapping
             for mapping in out_hid_mapping_tuples:
                 source_sheet_id = mapping[0]
-                node_connections += query_cppn(cppn,oc,output_coordinates,(substrate[source_sheet_id],source_sheet_id), hidden_node_ids[idx], id_dict) 
+                node_connections += query_cppn(cppn,oc,output_coordinates,(substrate[source_sheet_id],source_sheet_id), hidden_node_ids[idx], id_dict)
                 idx += len(substrate[source_sheet_id])
-            if node_connections: 
+            if node_connections:
                 node_evals.append((output_node_ids[out_node_counter], output_activation, sum, node_connections))
             hidden_idx = idx
             idx = 0
             out_node_counter += 1
-        
+
         # Query CPPN for mapping between hidden layers (from top to bottom)
         hid_node_counter = 0
         next_idx = idx = hidden_idx
@@ -128,12 +128,12 @@ def create_substrate(cppn, substrate, mapping_tuples, id_dict, act_func="relu"):
                 # For each coordinate in target sheet
                 for hc in substrate[target_sheet_id]:
                     # Adding Biases from Hidden to Hidden
-                    node_connections = query_cppn(cppn,hc,(substrate[target_sheet_id],target_sheet_id),bias_coordinates,bias_node_ids[0], id_dict)  
+                    node_connections = query_cppn(cppn,hc,(substrate[target_sheet_id],target_sheet_id),bias_coordinates,bias_node_ids[0], id_dict)
                     for mapping in hid_hid_mapping_tuple:
                         source_sheet_id = mapping[0]
                         node_connections += query_cppn(cppn,hc,(substrate[target_sheet_id],target_sheet_id),(substrate[source_sheet_id], source_sheet_id),hidden_node_ids[idx], id_dict)
                         idx += len(substrate[source_sheet_id])
-                    if node_connections: 
+                    if node_connections:
                         node_evals.append((hidden_node_ids[hid_node_counter],hidden_activation,sum, node_connections))
                     hid_node_counter += 1
                     next_idx = idx
@@ -151,7 +151,7 @@ def create_substrate(cppn, substrate, mapping_tuples, id_dict, act_func="relu"):
                 node_connections = query_cppn(cppn, hc, (substrate[target_sheet_id],target_sheet_id), input_coordinates, input_node_ids[idx], id_dict)
                 # Adding Biases from Hidden to Input
                 node_connections += query_cppn(cppn,hc,(substrate[target_sheet_id],target_sheet_id),bias_coordinates,bias_node_ids[0], id_dict)
-                if node_connections: 
+                if node_connections:
                     node_evals.append((hidden_node_ids[hid_node_counter],hidden_activation, sum,node_connections))
                 hid_node_counter += 1
 
@@ -166,7 +166,7 @@ def create_substrate(cppn, substrate, mapping_tuples, id_dict, act_func="relu"):
             for oc in output_coordinates[0]:
                 node_connections = query_cppn(cppn,oc,output_coordinates,input_coordinates,input_node_ids[idx], id_dict)
                 node_connections += query_cppn(cppn,oc,output_coordinates,bias_coordinates,bias_node_ids[idx], id_dict)
-                if node_connections: 
+                if node_connections:
                     node_evals.append((output_node_ids[counter],output_activation,sum,node_connections))
                 counter += 1
 
@@ -215,8 +215,8 @@ def gather_layers(substrate):
     for i in range(len(substrate)):
         layers[i] = []
         for key in substrate.keys():
-            if key[0] == i and key not in layers[i]: 
+            if key[0] == i and key not in layers[i]:
                 layers[i].append(key)
-        if layers[i] == []: 
+        if layers[i] == []:
             del layers[i]
     return layers

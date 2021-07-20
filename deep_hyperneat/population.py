@@ -4,17 +4,17 @@ Population class for Deep HyperNEAT
 Felix Sosa
 '''
 import numpy as np
-from genome import Genome
-from reproduction import Reproduction
-from util import iteritems,itervalues
-from species import SpeciesSet
-from reporters import report_fitness, report_species, plot_fitness, plot_complexity, report_output
+from deep_hyperneat.genome import Genome
+from deep_hyperneat.reproduction import Reproduction
+from deep_hyperneat.util import iteritems,itervalues
+from deep_hyperneat.species import SpeciesSet
+from deep_hyperneat.reporters import report_fitness, report_species, plot_fitness, report_output
 
 class Population():
 
 	def __init__(self, key, size, elitism=1, state=None):
 		'''
-		Class for populations. 
+		Class for populations.
 
 		key		-- population key
 		size 	-- population size
@@ -39,7 +39,7 @@ class Population():
 			self.species.speciate(self.population,0)
 		else:
 			# Assign values from state
-			self.population, self.reproduction = state	
+			self.population, self.reproduction = state
 
 	def run(self,task,goal,generations=None):
 		'''
@@ -72,7 +72,7 @@ class Population():
 					curr_best = genome
 				# Update generation's most complex
 				if curr_max_complex is None or genome.complexity() > curr_max_complex.complexity():
-					curr_max_complex = genome	
+					curr_max_complex = genome
 				# Update generation's least complex
 				if curr_min_complex is None or genome.complexity() < curr_min_complex.complexity():
 					curr_min_complex = genome
@@ -80,7 +80,7 @@ class Population():
 			# Update global best genome if possible
 			if self.best_genome is None or curr_best.fitness > self.best_genome.fitness:
 				self.best_genome = curr_best
-			
+
 			# Update global most and least complex genomes
 			if self.max_complex_genome is None or curr_max_complex.complexity() > self.max_complex_genome.complexity():
 				self.max_complex_genome = curr_max_complex
@@ -103,20 +103,20 @@ class Population():
 			# Reached fitness goal, we can stop
 			if self.best_genome.fitness >= goal:
 				reached_goal = True
-			
+
 			# Create new unspeciated popuation based on current population's fitness
 			self.population = self.reproduction.reproduce_with_species(self.species,
-																	   self.size, 
+																	   self.size,
 																	   self.current_gen)
 			# Check for species extinction (species did not perform well)
 			if not self.species.species:
 				print("!!! Species went extinct !!!")
 				self.population = self.reproduction.create_new_population(self.size)
-		
+
 			# Speciate new population
 			self.species.speciate(self.population, self.current_gen)
 			self.current_gen += 1
-		
+
 		generations = range(self.current_gen)
 		plot_fitness(generations, best_fitnesses)
 		return self.best_genome
