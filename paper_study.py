@@ -1,14 +1,14 @@
 '''
-File for the study used to test DeepHyperNEAT in "Deep HyperNEAT: 
-Evolving the Size and Depth ofthe Substrate" by Felix Sosa and 
+File for the study used to test DeepHyperNEAT in "Deep HyperNEAT:
+Evolving the Size and Depth ofthe Substrate" by Felix Sosa and
 Kenneth Stanley.
 
 Just run "python paper_study.py" in terminal to rerun if desired.
 '''
-from genome import Genome
-from population import Population
-from phenomes import FeedForwardCPPN as CPPN 
-from decode import decode
+from deep_hyperneat.genome import Genome
+from deep_hyperneat.population import Population
+from deep_hyperneat.phenomes import FeedForwardCPPN as CPPN
+from deep_hyperneat.decode import decode
 import numpy as np
 
 # Substrate parameters
@@ -63,7 +63,7 @@ for x in champ_fitness:
 
 print("Number of IncDepth Mutations: {} out of {}".format(num_depth,100))
 print("Number of IncBreadth Mutations: {} out of {}".format(num_breadth,100))
-print("Mean Number of Generations to Solution: {} with StdDev: {}".format(np.mean(pop_gens), 
+print("Mean Number of Generations to Solution: {} with StdDev: {}".format(np.mean(pop_gens),
 	  np.std(pop_gens)))
 print("Mean Number of IncDepth Mutations per Champion: {}".format(np.mean([x[0] for x in champ_fitness])))
 print("StdDev: {}".format(np.std([x[0] for x in champ_fitness])))
