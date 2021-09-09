@@ -3,10 +3,10 @@ Set of functions for reporting status of an evolutionary run.
 
 NOTE: Only meant for XOR at the moment. Working on generalizing to any task.
 '''
-from util import iteritems,itervalues,iterkeys
-from phenomes import FeedForwardCPPN as CPPN 
-from phenomes import FeedForwardSubstrate as Substrate 
-from decode import decode
+from deep_hyperneat.util import iteritems,itervalues,iterkeys
+from deep_hyperneat.phenomes import FeedForwardCPPN as CPPN
+from deep_hyperneat.phenomes import FeedForwardSubstrate as Substrate
+from deep_hyperneat.decode import decode
 import seaborn
 import matplotlib.pyplot as plt
 
@@ -52,7 +52,7 @@ def report_fitness(pop):
 	print("=================================================")
 	print("Best Fitness \t Avg Fitness \t Champion")
 	print("============ \t =========== \t ========")
-	print("{:.2f} \t\t {:.2f} \t\t {}".format(pop.best_genome.fitness, 
+	print("{:.2f} \t\t {:.2f} \t\t {}".format(pop.best_genome.fitness,
 		  avg_fitness/pop.size,pop.best_genome.key))
 	print("=================================================")
 	print("Max Complexity \t Avg Complexity")
@@ -69,10 +69,14 @@ def report_species(species_set, generation):
 	print("\nSpecies Key \t Fitness Mean/Max \t Sp. Size")
 	print("=========== \t ================ \t ========")
 	for species in species_set.species:
-		print("{} \t\t {:.2} / {:.2} \t\t {}".format(species, 
+		# print("{} \t\t {:.2} / {:.2} \t\t {}".format(species,
+		# 	species_set.species[species].fitness,
+		# 	species_set.species[species].max_fitness,
+		# 	len(species_set.species[species].members)))
+		print(species,
 			species_set.species[species].fitness,
 			species_set.species[species].max_fitness,
-			len(species_set.species[species].members)))
+			len(species_set.species[species].members))
 
 def plot_fitness(x,y):
 	plt.plot(x,y)

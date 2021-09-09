@@ -1,8 +1,8 @@
-from genome import Genome
-from population import Population
-from phenomes import FeedForwardCPPN as CPPN 
-from decode import decode
-from visualize import draw_net
+from deep_hyperneat.genome import Genome
+from deep_hyperneat.population import Population
+from deep_hyperneat.phenomes import FeedForwardCPPN as CPPN
+from deep_hyperneat.decode import decode
+from deep_hyperneat.visualize import draw_net
 
 # Substrate parameters
 sub_in_dims = [1,2]
@@ -45,12 +45,12 @@ cppn = CPPN.create(winner_genome)
 # Decode Substrate from CPPN
 substrate = decode(cppn,sub_in_dims,sub_o_dims,sub_sh_dims)
 
-# Visualize networks of CPPN and Substrate. Files are saved in 
+# Visualize networks of CPPN and Substrate. Files are saved in
 # 	reports/champion_images
 draw_net(cppn, filename="reports/champion_images/xor_cppn")
 draw_net(substrate, filename="reports/champion_images/xor_substrate")
 
 # Run winning genome on the task again
-print("\nChampion Genome: {} with Fitness {}\n".format(winner_genome.key, 
+print("\nChampion Genome: {} with Fitness {}\n".format(winner_genome.key,
 	  											winner_genome.fitness))
 xor([(winner_genome.key,winner_genome)])

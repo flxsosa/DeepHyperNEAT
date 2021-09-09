@@ -4,7 +4,7 @@ Contains classes for CPPN and Substrate phenomes.
 Largely copied from neat-python. (Copyright 2015-2017, CodeReclaimers, LLC.)
 '''
 
-from util import itervalues
+from deep_hyperneat.util import itervalues
 import numpy as np
 
 def creates_cycle(connections, test):
@@ -107,9 +107,9 @@ class FeedForwardCPPN():
         self.input_nodes = inputs
         self.output_nodes = {key:mapping_tuples[key] for key in mapping_tuples} if mapping_tuples else outputs
         self.node_evals = node_evals
-        self.values = {key:0.0 for key in inputs + outputs}
+        self.values = {key:0.0 for key in list(inputs) + list(outputs)}
         self.nodes = nodes
-    
+
     def activate(self, inputs):
         if len(self.input_nodes) != len(inputs):
             raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(
@@ -160,7 +160,7 @@ class FeedForwardSubstrate():
         self.node_evals = node_evals
         self.values = dict((key, 0.0) for key in inputs + outputs)
 
-    def activate(self, inputs):          
+    def activate(self, inputs):
         if len(self.input_nodes+self.bias_node) != len(inputs):
             raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(
                                         len(self.input_nodes+self.bias_node), len(inputs)))

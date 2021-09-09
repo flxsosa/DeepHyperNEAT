@@ -4,7 +4,7 @@ Classes that handle speciation in Deep HyperNEAT.
 Largely copied from neat-python. Copyright 2015-2017, CodeReclaimers, LLC.
 '''
 from itertools import count
-from util import iteritems, iterkeys, itervalues
+from deep_hyperneat.util import iteritems, iterkeys, itervalues
 
 class GenomeDistanceCache:
 	# Cache of genome distances
@@ -49,7 +49,7 @@ class GenomeDistanceCache:
 					disjoint_nodes += 1
 				else:
 					# Homologous genes compute their own distance value.
-					node_distance += self.node_gene_distance(genome_0_node, 
+					node_distance += self.node_gene_distance(genome_0_node,
 														genome_1_node)
 			# Find most number of nodes in either genome
 			max_nodes = max(len(genome0.nodes), len(genome1.nodes))
@@ -72,7 +72,7 @@ class GenomeDistanceCache:
 					disjoint_connections += 1
 				else:
 					# Homologous genes compute their own distance value.
-					connection_distance += self.connection_gene_distance(genome_0_conn, 
+					connection_distance += self.connection_gene_distance(genome_0_conn,
 																	genome_1_conn)
 
 			max_conn = max(len(genome0.connections), len(genome1.connections))
@@ -150,7 +150,7 @@ class SpeciesSet:
 				genome = population[gid]
 				genome_distance = distances(species.representative, genome)
 				candidate_representatives.append((genome_distance, genome))
-			# The new representative for the current species is the 
+			# The new representative for the current species is the
 			# closest to the current representative
 			_, new_rep = min(candidate_representatives, key=lambda x: x[0])
 			new_rid = new_rep.key
@@ -204,4 +204,4 @@ class SpeciesSet:
 
 	def get_species(self, key):
 		sid = self.genome_to_species[key]
-		return self.species[sid]			
+		return self.species[sid]
